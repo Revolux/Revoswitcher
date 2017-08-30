@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #MINER NAME
-NAME=amir.FRM3
+NAME=amir.rig9
 
 
 ## DONT TOUCH THESE
@@ -17,7 +17,7 @@ echo 'revolux123' | sudo -S `dirname $0`/overclock.sh
 while [ 1 ];
 do
 #etHASH
-${CURDIR}/ethminer/ethminer -U -S us-east.ethash-hub.miningpoolhub.com:12020 -O ${NAME}:x --farm-retries 0 -FS exit	
+${CURDIR}/ethminer/ethminer -U -S us-east.ethash-hub.miningpoolhub.com:12020 -O ${NAME}:x --farm-retries 0 -FS exit
 
 #Groestl
 ${CURDIR}/ccminer/ccminer -r 0 -a groestl -o stratum+tcp://hub.miningpoolhub.com:12004 -O ${NAME}:x
