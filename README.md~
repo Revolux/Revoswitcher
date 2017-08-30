@@ -1,0 +1,21 @@
+#REVOSWITCHER
+## A Multi Algorithm Autoswitching Miner
+
+This program will automatically mine the most profitable coin of the following algorithms:
+* Cryptonight
+* Ethash // ETH, ETC, EXP
+* Equihash // ZEC, ZCH
+* Groestl
+* Myriad-Groestl
+* Lyra2RE2
+* NeoScrypt
+* Skein
+
+#INSTALLATION
+### 1) Download and Extract REVOSWITCHER.zip to the directory of your choice
+### 2) Make switch.sh and overclock.sh executable
+	`chmod +x switch.sh`
+	`chmod +x overclock.sh`
+### 3) Add REVOSWITCHER to your startup commands 
+To run, add the following line to your Startup Applications Preferences ("STARTUP - CHOOSE MINER HERE" on the Desktop of Revolux Miners)
+`screen -d -m -S REVOSWITCHER /home/revolux/Desktop/REVOSWITCHER/switch.sh`
