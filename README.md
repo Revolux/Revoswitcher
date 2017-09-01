@@ -1,4 +1,4 @@
-# REVOSWITCHER
+# REVOSWITCHER - AMD EDITION
 ## A Multi Algorithm Autoswitching Miner
 
 This program will automatically mine the most profitable coin of the following algorithms:
