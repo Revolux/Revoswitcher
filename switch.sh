@@ -20,7 +20,11 @@ do
 ${CURDIR}/ethminer/ethminer -G -S us-east.ethash-hub.miningpoolhub.com:12020 -O ${NAME}:x --farm-retries 0 -FS exit
 
 #monero
-${CURDIR}/monero/xmrMiner/build/xmrMiner -r 0 -R 4 -l 16x54 -o stratum+tcp://us-east.cryptonight-hub.miningpoolhub.com:12024 -O ${NAME}:x -D
+#${CURDIR}/monero/xmrMiner/build/xmrMiner -r 0 -R 4 -l 16x54 -o stratum+tcp://us-east.cryptonight-hub.miningpoolhub.com:12024 -O ${NAME}:x -D
+(PIDFILE=$(mktemp /tmp/foo.XXXXXX) && trap "rm $PIDFILE" 0 \
+         && { (unbuffer ${CURDIR}/sgminer-gm/sgminer --event-on idle --event-quit true -k cryptonight -o stratum+tcp://us-east.cryptonight-hub.miningpoolhub.com:12024 -u ${NAME} -p x -o exit) \
+                  1> >(tee >(grep -q "Press any key to exit" && kill $(cat $PIDFILE)) >&1) \
+              & PID=$! && echo $PID >$PIDFILE ; wait $PID || true; })
 
 (PIDFILE=$(mktemp /tmp/foo.XXXXXX) && trap "rm $PIDFILE" 0 \
          && { (unbuffer ${CURDIR}/sgminer-gm/sgminer --event-on idle --event-quit true -k vanilla -o stratum+tcp://hub.miningpoolhub.com:12019 -u ${NAME} -p x -o exit) \
@@ -66,7 +70,11 @@ ${CURDIR}/monero/xmrMiner/build/xmrMiner -r 0 -R 4 -l 16x54 -o stratum+tcp://us-
          && { (unbuffer ${CURDIR}/sgminer-gm/sgminer --event-on idle --event-quit true -k lyra2rev2 -o stratum+tcp://hub.miningpoolhub.com:12018 -u ${NAME} -p x) \
                   1> >(tee >(grep -q "Press any key to exit" && kill $(cat $PIDFILE)) >&1) \
               & PID=$! && echo $PID >$PIDFILE ; wait $PID || true; })
-${CURDIR}/optiminer-zcash/optiminer-zcash -i 64 -s us-east.equihash-hub.miningpoolhub.com:12023 -u ${NAME} -p x -watchdog-timeout 15 -watchdog-cmd exit
+(PIDFILE=$(mktemp /tmp/foo.XXXXXX) && trap "rm $PIDFILE" 0 \
+         && { (unbuffer ${CURDIR}/optiminer-zcash/optiminer-zcash -i 50 -s us-east.equihash-hub.miningpoolhub.com:12023 -u ${NAME} -p x) \
+                  1> >(tee >(grep -q "ERROR" && kill $(cat $PIDFILE)) >&1) \
+              & PID=$! && echo $PID >$PIDFILE ; wait $PID || true; })
+
 
 
 done
