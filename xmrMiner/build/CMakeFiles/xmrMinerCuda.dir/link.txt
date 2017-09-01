@@ -1,0 +1,2 @@
+/usr/bin/ar qc libxmrMinerCuda.a  CMakeFiles/xmrMinerCuda.dir/cryptonight/xmrMinerCuda_generated_cuda_cryptonight_extra.cu.o CMakeFiles/xmrMinerCuda.dir/cryptonight/xmrMinerCuda_generated_cuda_cryptonight_core.cu.o CMakeFiles/xmrMinerCuda.dir/cryptonight/xmrMinerCuda_generated_cryptonight.cu.o
+/usr/bin/ranlib libxmrMinerCuda.a

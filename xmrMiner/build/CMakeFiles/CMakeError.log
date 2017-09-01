@@ -1,0 +1,319 @@
+Determining if the pthread_create exist failed with the following output:
+Change Dir: /home/revolux/Desktop/monero/xmrMiner/build/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_751f5/fast"
+/usr/bin/make -f CMakeFiles/cmTC_751f5.dir/build.make CMakeFiles/cmTC_751f5.dir/build
+make[1]: Entering directory `/home/revolux/Desktop/monero/xmrMiner/build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_751f5.dir/CheckSymbolExists.c.o
+/usr/bin/cc    -fPIC    -o CMakeFiles/cmTC_751f5.dir/CheckSymbolExists.c.o   -c /home/revolux/Desktop/monero/xmrMiner/build/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+Linking C executable cmTC_751f5
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_751f5.dir/link.txt --verbose=1
+/usr/bin/cc  -fPIC     CMakeFiles/cmTC_751f5.dir/CheckSymbolExists.c.o  -o cmTC_751f5 -rdynamic 
+CMakeFiles/cmTC_751f5.dir/CheckSymbolExists.c.o: In function `main':
+CheckSymbolExists.c:(.text+0x1b): undefined reference to `pthread_create'
+collect2: error: ld returned 1 exit status
+make[1]: *** [cmTC_751f5] Error 1
+make[1]: Leaving directory `/home/revolux/Desktop/monero/xmrMiner/build/CMakeFiles/CMakeTmp'
+make: *** [cmTC_751f5/fast] Error 2
+
+File /home/revolux/Desktop/monero/xmrMiner/build/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <pthread.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef pthread_create
+  return ((int*)(&pthread_create))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+
+Determining if the function pthread_create exists in the pthreads failed with the following output:
+Change Dir: /home/revolux/Desktop/monero/xmrMiner/build/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_6f6ff/fast"
+/usr/bin/make -f CMakeFiles/cmTC_6f6ff.dir/build.make CMakeFiles/cmTC_6f6ff.dir/build
+make[1]: Entering directory `/home/revolux/Desktop/monero/xmrMiner/build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_6f6ff.dir/CheckFunctionExists.c.o
+/usr/bin/cc    -fPIC -DCHECK_FUNCTION_EXISTS=pthread_create   -o CMakeFiles/cmTC_6f6ff.dir/CheckFunctionExists.c.o   -c /usr/share/cmake-3.5/Modules/CheckFunctionExists.c
+Linking C executable cmTC_6f6ff
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_6f6ff.dir/link.txt --verbose=1
+/usr/bin/cc  -fPIC -DCHECK_FUNCTION_EXISTS=pthread_create    CMakeFiles/cmTC_6f6ff.dir/CheckFunctionExists.c.o  -o cmTC_6f6ff -rdynamic -lpthreads 
+/usr/bin/ld: cannot find -lpthreads
+collect2: error: ld returned 1 exit status
+make[1]: *** [cmTC_6f6ff] Error 1
+make[1]: Leaving directory `/home/revolux/Desktop/monero/xmrMiner/build/CMakeFiles/CMakeTmp'
+make: *** [cmTC_6f6ff/fast] Error 2
+
+
+Determining if the function syslog.h exists failed with the following output:
+Change Dir: /home/revolux/Desktop/monero/xmrMiner/build/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_f5081/fast"
+/usr/bin/make -f CMakeFiles/cmTC_f5081.dir/build.make CMakeFiles/cmTC_f5081.dir/build
+make[1]: Entering directory `/home/revolux/Desktop/monero/xmrMiner/build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_f5081.dir/CheckFunctionExists.c.o
+/usr/bin/cc    -DCHECK_FUNCTION_EXISTS=syslog.h   -o CMakeFiles/cmTC_f5081.dir/CheckFunctionExists.c.o   -c /usr/share/cmake-3.5/Modules/CheckFunctionExists.c
+<command-line>:0:29: error: expected ‘=’, ‘,’, ‘;’, ‘asm’ or ‘__attribute__’ before ‘.’ token
+/usr/share/cmake-3.5/Modules/CheckFunctionExists.c:6:6: note: in expansion of macro ‘CHECK_FUNCTION_EXISTS’
+ char CHECK_FUNCTION_EXISTS();
+      ^
+/usr/share/cmake-3.5/Modules/CheckFunctionExists.c: In function ‘main’:
+<command-line>:0:23: error: ‘syslog’ undeclared (first use in this function)
+/usr/share/cmake-3.5/Modules/CheckFunctionExists.c:14:3: note: in expansion of macro ‘CHECK_FUNCTION_EXISTS’
+   CHECK_FUNCTION_EXISTS();
+   ^
+<command-line>:0:23: note: each undeclared identifier is reported only once for each function it appears in
+/usr/share/cmake-3.5/Modules/CheckFunctionExists.c:14:3: note: in expansion of macro ‘CHECK_FUNCTION_EXISTS’
+   CHECK_FUNCTION_EXISTS();
+   ^
+make[1]: *** [CMakeFiles/cmTC_f5081.dir/CheckFunctionExists.c.o] Error 1
+make[1]: Leaving directory `/home/revolux/Desktop/monero/xmrMiner/build/CMakeFiles/CMakeTmp'
+make: *** [cmTC_f5081/fast] Error 2
+
+
+Determining if the function alloca exists failed with the following output:
+Change Dir: /home/revolux/Desktop/monero/xmrMiner/build/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_98e9c/fast"
+/usr/bin/make -f CMakeFiles/cmTC_98e9c.dir/build.make CMakeFiles/cmTC_98e9c.dir/build
+make[1]: Entering directory `/home/revolux/Desktop/monero/xmrMiner/build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_98e9c.dir/CheckFunctionExists.c.o
+/usr/bin/cc    -DCHECK_FUNCTION_EXISTS=alloca   -o CMakeFiles/cmTC_98e9c.dir/CheckFunctionExists.c.o   -c /usr/share/cmake-3.5/Modules/CheckFunctionExists.c
+<command-line>:0:23: warning: conflicting types for built-in function ‘alloca’ [enabled by default]
+/usr/share/cmake-3.5/Modules/CheckFunctionExists.c:6:6: note: in expansion of macro ‘CHECK_FUNCTION_EXISTS’
+ char CHECK_FUNCTION_EXISTS();
+      ^
+Linking C executable cmTC_98e9c
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_98e9c.dir/link.txt --verbose=1
+/usr/bin/cc   -DCHECK_FUNCTION_EXISTS=alloca    CMakeFiles/cmTC_98e9c.dir/CheckFunctionExists.c.o  -o cmTC_98e9c -rdynamic 
+CMakeFiles/cmTC_98e9c.dir/CheckFunctionExists.c.o: In function `main':
+CheckFunctionExists.c:(.text+0x15): undefined reference to `alloca'
+collect2: error: ld returned 1 exit status
+make[1]: *** [cmTC_98e9c] Error 1
+make[1]: Leaving directory `/home/revolux/Desktop/monero/xmrMiner/build/CMakeFiles/CMakeTmp'
+make: *** [cmTC_98e9c/fast] Error 2
+
+
+Determining if files sys/endian.h exist failed with the following output:
+Change Dir: /home/revolux/Desktop/monero/xmrMiner/build/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_62b4e/fast"
+/usr/bin/make -f CMakeFiles/cmTC_62b4e.dir/build.make CMakeFiles/cmTC_62b4e.dir/build
+make[1]: Entering directory `/home/revolux/Desktop/monero/xmrMiner/build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_62b4e.dir/CheckIncludeFiles.c.o
+/usr/bin/cc     -o CMakeFiles/cmTC_62b4e.dir/CheckIncludeFiles.c.o   -c /home/revolux/Desktop/monero/xmrMiner/build/CMakeFiles/CMakeTmp/CheckIncludeFiles.c
+/home/revolux/Desktop/monero/xmrMiner/build/CMakeFiles/CMakeTmp/CheckIncludeFiles.c:2:24: fatal error: sys/endian.h: No such file or directory
+ #include <sys/endian.h>
+                        ^
+compilation terminated.
+make[1]: *** [CMakeFiles/cmTC_62b4e.dir/CheckIncludeFiles.c.o] Error 1
+make[1]: Leaving directory `/home/revolux/Desktop/monero/xmrMiner/build/CMakeFiles/CMakeTmp'
+make: *** [cmTC_62b4e/fast] Error 2
+
+Source:
+/* */
+#include <sys/endian.h>
+
+
+int main(void){return 0;}
+
+Determining if the prototype be32dec exists for HAVE_DECL_BE32DEC failed with the following output:
+Change Dir: /home/revolux/Desktop/monero/xmrMiner/build/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_205eb/fast"
+/usr/bin/make -f CMakeFiles/cmTC_205eb.dir/build.make CMakeFiles/cmTC_205eb.dir/build
+make[1]: Entering directory `/home/revolux/Desktop/monero/xmrMiner/build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_205eb.dir/CheckPrototypeDefinition.c.o
+/usr/bin/cc     -o CMakeFiles/cmTC_205eb.dir/CheckPrototypeDefinition.c.o   -c /home/revolux/Desktop/monero/xmrMiner/build/CMakeFiles/CMakeTmp/CheckPrototypeDefinition.c
+/home/revolux/Desktop/monero/xmrMiner/build/CMakeFiles/CMakeTmp/CheckPrototypeDefinition.c:1:24: fatal error: sys/endian.h: No such file or directory
+ #include <sys/endian.h>
+                        ^
+compilation terminated.
+make[1]: *** [CMakeFiles/cmTC_205eb.dir/CheckPrototypeDefinition.c.o] Error 1
+make[1]: Leaving directory `/home/revolux/Desktop/monero/xmrMiner/build/CMakeFiles/CMakeTmp'
+make: *** [cmTC_205eb/fast] Error 2
+
+
+#include <sys/endian.h>
+
+
+static void cmakeRequireSymbol(int dummy, ...) {
+  (void) dummy;
+}
+
+static void checkSymbol(void) {
+#ifndef be32dec
+  cmakeRequireSymbol(0, &be32dec);
+#endif
+}
+
+uint32_t be32dec(const void *) {
+  return 0;
+}
+
+#ifdef __CLASSIC_C__
+int main() {
+  int ac;
+  char*av[];
+#else
+int main(int ac, char *av[]) {
+#endif
+  checkSymbol();
+  if (ac > 1000) {
+    return *av[0];
+  }
+  return 0;
+}
+
+
+Determining if the prototype be32enc exists for HAVE_DECL_BE32ENC failed with the following output:
+Change Dir: /home/revolux/Desktop/monero/xmrMiner/build/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_29552/fast"
+/usr/bin/make -f CMakeFiles/cmTC_29552.dir/build.make CMakeFiles/cmTC_29552.dir/build
+make[1]: Entering directory `/home/revolux/Desktop/monero/xmrMiner/build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_29552.dir/CheckPrototypeDefinition.c.o
+/usr/bin/cc     -o CMakeFiles/cmTC_29552.dir/CheckPrototypeDefinition.c.o   -c /home/revolux/Desktop/monero/xmrMiner/build/CMakeFiles/CMakeTmp/CheckPrototypeDefinition.c
+/home/revolux/Desktop/monero/xmrMiner/build/CMakeFiles/CMakeTmp/CheckPrototypeDefinition.c:1:24: fatal error: sys/endian.h: No such file or directory
+ #include <sys/endian.h>
+                        ^
+compilation terminated.
+make[1]: *** [CMakeFiles/cmTC_29552.dir/CheckPrototypeDefinition.c.o] Error 1
+make[1]: Leaving directory `/home/revolux/Desktop/monero/xmrMiner/build/CMakeFiles/CMakeTmp'
+make: *** [cmTC_29552/fast] Error 2
+
+
+#include <sys/endian.h>
+
+
+static void cmakeRequireSymbol(int dummy, ...) {
+  (void) dummy;
+}
+
+static void checkSymbol(void) {
+#ifndef be32enc
+  cmakeRequireSymbol(0, &be32enc);
+#endif
+}
+
+void be32enc(void *, uint32_t) {
+  return ;
+}
+
+#ifdef __CLASSIC_C__
+int main() {
+  int ac;
+  char*av[];
+#else
+int main(int ac, char *av[]) {
+#endif
+  checkSymbol();
+  if (ac > 1000) {
+    return *av[0];
+  }
+  return 0;
+}
+
+
+Determining if the prototype le32dec exists for HAVE_DECL_LE32DEC failed with the following output:
+Change Dir: /home/revolux/Desktop/monero/xmrMiner/build/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_0665b/fast"
+/usr/bin/make -f CMakeFiles/cmTC_0665b.dir/build.make CMakeFiles/cmTC_0665b.dir/build
+make[1]: Entering directory `/home/revolux/Desktop/monero/xmrMiner/build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_0665b.dir/CheckPrototypeDefinition.c.o
+/usr/bin/cc     -o CMakeFiles/cmTC_0665b.dir/CheckPrototypeDefinition.c.o   -c /home/revolux/Desktop/monero/xmrMiner/build/CMakeFiles/CMakeTmp/CheckPrototypeDefinition.c
+/home/revolux/Desktop/monero/xmrMiner/build/CMakeFiles/CMakeTmp/CheckPrototypeDefinition.c:1:24: fatal error: sys/endian.h: No such file or directory
+ #include <sys/endian.h>
+                        ^
+compilation terminated.
+make[1]: *** [CMakeFiles/cmTC_0665b.dir/CheckPrototypeDefinition.c.o] Error 1
+make[1]: Leaving directory `/home/revolux/Desktop/monero/xmrMiner/build/CMakeFiles/CMakeTmp'
+make: *** [cmTC_0665b/fast] Error 2
+
+
+#include <sys/endian.h>
+
+
+static void cmakeRequireSymbol(int dummy, ...) {
+  (void) dummy;
+}
+
+static void checkSymbol(void) {
+#ifndef le32dec
+  cmakeRequireSymbol(0, &le32dec);
+#endif
+}
+
+uint32_t le32dec(const void *) {
+  return 0;
+}
+
+#ifdef __CLASSIC_C__
+int main() {
+  int ac;
+  char*av[];
+#else
+int main(int ac, char *av[]) {
+#endif
+  checkSymbol();
+  if (ac > 1000) {
+    return *av[0];
+  }
+  return 0;
+}
+
+
+Determining if the prototype le32enc exists for HAVE_DECL_LE32ENC failed with the following output:
+Change Dir: /home/revolux/Desktop/monero/xmrMiner/build/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_8465d/fast"
+/usr/bin/make -f CMakeFiles/cmTC_8465d.dir/build.make CMakeFiles/cmTC_8465d.dir/build
+make[1]: Entering directory `/home/revolux/Desktop/monero/xmrMiner/build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_8465d.dir/CheckPrototypeDefinition.c.o
+/usr/bin/cc     -o CMakeFiles/cmTC_8465d.dir/CheckPrototypeDefinition.c.o   -c /home/revolux/Desktop/monero/xmrMiner/build/CMakeFiles/CMakeTmp/CheckPrototypeDefinition.c
+/home/revolux/Desktop/monero/xmrMiner/build/CMakeFiles/CMakeTmp/CheckPrototypeDefinition.c:1:24: fatal error: sys/endian.h: No such file or directory
+ #include <sys/endian.h>
+                        ^
+compilation terminated.
+make[1]: *** [CMakeFiles/cmTC_8465d.dir/CheckPrototypeDefinition.c.o] Error 1
+make[1]: Leaving directory `/home/revolux/Desktop/monero/xmrMiner/build/CMakeFiles/CMakeTmp'
+make: *** [cmTC_8465d/fast] Error 2
+
+
+#include <sys/endian.h>
+
+
+static void cmakeRequireSymbol(int dummy, ...) {
+  (void) dummy;
+}
+
+static void checkSymbol(void) {
+#ifndef le32enc
+  cmakeRequireSymbol(0, &le32enc);
+#endif
+}
+
+void le32enc(void *, uint32_t) {
+  return ;
+}
+
+#ifdef __CLASSIC_C__
+int main() {
+  int ac;
+  char*av[];
+#else
+int main(int ac, char *av[]) {
+#endif
+  checkSymbol();
+  if (ac > 1000) {
+    return *av[0];
+  }
+  return 0;
+}
+
+

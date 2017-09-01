@@ -1,0 +1,9 @@
+/home/revolux/Desktop/monero/xmrMiner/build/CMakeFiles/edit_cache.dir
+/home/revolux/Desktop/monero/xmrMiner/build/CMakeFiles/rebuild_cache.dir
+/home/revolux/Desktop/monero/xmrMiner/build/CMakeFiles/list_install_components.dir
+/home/revolux/Desktop/monero/xmrMiner/build/CMakeFiles/install.dir
+/home/revolux/Desktop/monero/xmrMiner/build/CMakeFiles/install/local.dir
+/home/revolux/Desktop/monero/xmrMiner/build/CMakeFiles/install/strip.dir
+/home/revolux/Desktop/monero/xmrMiner/build/CMakeFiles/xmrMiner.dir
+/home/revolux/Desktop/monero/xmrMiner/build/CMakeFiles/xmrMinerCrypto.dir
+/home/revolux/Desktop/monero/xmrMiner/build/CMakeFiles/xmrMinerCuda.dir
