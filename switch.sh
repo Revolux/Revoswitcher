@@ -40,7 +40,7 @@ ${CURDIR}/ccminer/ccminer -r 0 -a skein -o stratum+tcp://hub.miningpoolhub.com:1
 #Equihash
 (PIDFILE=$(mktemp /tmp/foo.XXXXXX) && trap "rm $PIDFILE" 0 \
          && { (unbuffer ${CURDIR}/zcash/miner --eexit 3 --intensity 64 64 64 64 64 64 64 --cuda_devices 0 1 2 3 4 5 6 --templimit 80 --server us-east.equihash-hub.miningpoolhub.com --port 12023 --user ${NAME} --pass x) \
-                  1> >(tee >(grep -q "Total speed: 0 Sol/s" && kill $(cat $PIDFILE)) >&1) \
+                  1> >(tee >(grep -q "ERROR: Lost connection with the server." && kill $(cat $PIDFILE)) >&1) \
               & PID=$! && echo $PID >$PIDFILE ; wait $PID || true; })
 done
 
