@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #MINER NAME
-NAME=amir.rig9
+NAME=amir.FRM4
 
 
 ## DONT TOUCH THESE
@@ -29,7 +29,7 @@ ${CURDIR}/ccminer/ccminer -r 0 -a myr-gr -o stratum+tcp://hub.miningpoolhub.com:
 ${CURDIR}/ccminer/ccminer -r 0 -a lyra2v2 -o stratum+tcp://hub.miningpoolhub.com:12018 -O ${NAME}:x 
 
 #monero
-${CURDIR}/monero/xmrMiner/build/xmrMiner -r 0 -R 4 -l 16x54 -o stratum+tcp://us-east.cryptonight-hub.miningpoolhub.com:12024 -O ${NAME}:x -D
+${CURDIR}/xmrMiner/build/xmrMiner -r 0 -R 4 -l 16x54 -o stratum+tcp://us-east.cryptonight-hub.miningpoolhub.com:12024 -O ${NAME}:x -D
 
 #Feathercoin (NEOSCRYPT)
 ${CURDIR}/ccminer/ccminer -r 0 -a neoscrypt -o stratum+tcp://hub.miningpoolhub.com:12012 -O ${NAME}:x 
