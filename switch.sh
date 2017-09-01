@@ -9,6 +9,8 @@ SHADERS=2304
 CURDIR=`dirname $0`
 #echo 'revolux123' | sudo -S `dirname $0`/overclock.sh
 ####
+export GPU_USE_SYNC_OBJECTS=1
+export GPU_MAX_ALLOC_PERCENT=100
 
 ## YOU CAN CHANGE THIS FROM INFINITE LOOP TO 
 ## A CONDITIONAL SO IT HAS A FAILSAFE
