@@ -22,7 +22,7 @@ ${CURDIR}/ethminer/ethminer -U -S us-east.ethash-hub.miningpoolhub.com:12020 -O 
 #Groestl
 (PIDFILE=$(mktemp /tmp/foo.XXXXXX) && trap "rm $PIDFILE" 0 \
          && { (unbuffer ${CURDIR}/ccminer/ccminer -r 0 -a groestl -o stratum+tcp://hub.miningpoolhub.com:12004 -O ${NAME}:x) \
-                  1> >(tee >(grep -q "...terminating workio thread" && kill $(cat $PIDFILE)) >&1) \
+                  1> >(tee >(grep -q "...terminating workio thread" && kill $(cat $PIDFILE)) >&1) \ 
               & PID=$! && echo $PID >$PIDFILE ; wait $PID || true; })
 
 #myr-gr

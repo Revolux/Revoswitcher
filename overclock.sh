@@ -13,14 +13,14 @@
 ## For example, CLOCK=60 means the core clock will be increased 
 ## By 60Mhz OVER the stock value ## 
 ## Range should typically be between 0-200 without additional power supply tweaking ##
-CLOCK=0
+CLOCK=40
 
 ## CHANGE THIS TO INCREASE GPU MEMORY CLOCK VALUE ##
 ## This is NOT an absolute value, it is additive. ##
 ## For example, MEM=1500 means the Memory clock will be increased
 ## By 1500Mhz OVER the original stock value ##
 ## Range should typically be between 0-2000 without additional power supply and VBIOS tweaking ##
-MEM=600
+MEM=1200
  
 
 CMD='/usr/bin/nvidia-settings'
@@ -32,7 +32,7 @@ echo 2800000 > /sys/devices/system/cpu/cpu0/cpufreq/scaling_min_freq
 for i in {0..6}
   do
     nvidia-smi -i ${i} -pm 0
-    nvidia-smi -i ${i} -pl 115
+    nvidia-smi -i ${i} -pl 140
     ${CMD} -a [gpu:${i}]/GPUPowerMizerMode=1
     ${CMD} -a [gpu:${i}]/GPUFanControlState=1
 
