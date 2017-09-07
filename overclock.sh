@@ -32,7 +32,7 @@ echo 2800000 > /sys/devices/system/cpu/cpu0/cpufreq/scaling_min_freq
 for i in {0..6}
   do
     nvidia-smi -i ${i} -pm 0
-    nvidia-smi -i ${i} -pl 140
+    nvidia-smi -i ${i} -pl 115
     ${CMD} -a [gpu:${i}]/GPUPowerMizerMode=1
     ${CMD} -a [gpu:${i}]/GPUFanControlState=1
 
