@@ -7,9 +7,8 @@ extern "C" {
 #include "lyra2/Lyra2.h"
 }
 
-#include "miner.h"
-#include "cuda_helper.h"
-
+#include <miner.h>
+#include <cuda_helper.h>
 
 static uint64_t *d_hash[MAX_GPUS];
 static uint64_t* d_matrix[MAX_GPUS];
@@ -73,21 +72,6 @@ void lyra2v2_hash(void *state, const void *input)
 	memcpy(state, hashA, 32);
 }
 
-#ifdef _DEBUG
-#define TRACE(algo) { \
-	if (max_nonce == 1 && pdata[19] <= 1) { \
-		uint32_t* debugbuf = NULL; \
-		cudaMallocHost(&debugbuf, 32); \
-		cudaMemcpy(debugbuf, d_hash[thr_id], 32, cudaMemcpyDeviceToHost); \
-		printf("lyra2 %s %08x %08x %08x %08x...%08x... \n", algo, swab32(debugbuf[0]), swab32(debugbuf[1]), \
-			swab32(debugbuf[2]), swab32(debugbuf[3]), swab32(debugbuf[7])); \
-		cudaFreeHost(debugbuf); \
-	} \
-}
-#else
-#define TRACE(algo) {}
-#endif
-
 static bool init[MAX_GPUS] = { 0 };
 
 extern "C" int scanhash_lyra2v2(int thr_id, struct work* work, uint32_t max_nonce, unsigned long *hashes_done)
@@ -97,6 +81,7 @@ extern "C" int scanhash_lyra2v2(int thr_id, struct work* work, uint32_t max_nonc
 	const uint32_t first_nonce = pdata[19];
 	int dev_id = device_map[thr_id];
 	int intensity = (device_sm[dev_id] < 500) ? 18 : is_windows() ? 19 : 20;
+	if (strstr(device_name[dev_id], "GTX 10")) intensity = 20;
 	uint32_t throughput = cuda_default_throughput(dev_id, 1UL << intensity);
 	if (init[thr_id]) throughput = min(throughput, max_nonce - first_nonce);
 
@@ -113,6 +98,7 @@ extern "C" int scanhash_lyra2v2(int thr_id, struct work* work, uint32_t max_nonc
 			cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync);
 			CUDA_LOG_ERROR();
 		}
+		gpulog(LOG_INFO, thr_id, "Intensity set to %g, %u cuda threads", throughput2intensity(throughput), throughput);
 
 		blake256_cpu_init(thr_id, throughput);
 		keccak256_cpu_init(thr_id,throughput);
@@ -141,52 +127,46 @@ extern "C" int scanhash_lyra2v2(int thr_id, struct work* work, uint32_t max_nonc
 
 	do {
 		int order = 0;
-		uint32_t foundNonces[2] = { 0, 0 };
 
 		blake256_cpu_hash_80(thr_id, throughput, pdata[19], d_hash[thr_id], order++);
-		TRACE("blake  :");
 		keccak256_cpu_hash_32(thr_id, throughput, pdata[19], d_hash[thr_id], order++);
-		TRACE("keccak :");
 		cubehash256_cpu_hash_32(thr_id, throughput, pdata[19], d_hash[thr_id], order++);
-		TRACE("cube   :");
 		lyra2v2_cpu_hash_32(thr_id, throughput, pdata[19], d_hash[thr_id], order++);
-		TRACE("lyra2  :");
 		skein256_cpu_hash_32(thr_id, throughput, pdata[19], d_hash[thr_id], order++);
-		TRACE("skein  :");
 		cubehash256_cpu_hash_32(thr_id, throughput,pdata[19], d_hash[thr_id], order++);
-		TRACE("cube   :");
 
-		bmw256_cpu_hash_32(thr_id, throughput, pdata[19], d_hash[thr_id], foundNonces);
+		memset(work->nonces, 0, sizeof(work->nonces));
+		bmw256_cpu_hash_32(thr_id, throughput, pdata[19], d_hash[thr_id], work->nonces);
 
 		*hashes_done = pdata[19] - first_nonce + throughput;
 
-		if (foundNonces[0] != 0)
+		if (work->nonces[0] != 0)
 		{
-			uint32_t vhash64[8];
-			be32enc(&endiandata[19], foundNonces[0]);
-			lyra2v2_hash(vhash64, endiandata);
-			if (vhash64[7] <= ptarget[7] && fulltest(vhash64, ptarget))
-			{
-				int res = 1;
-				work_set_target_ratio(work, vhash64);
-				pdata[19] = foundNonces[0];
-				// check if there was another one...
-				if (foundNonces[1] != 0)
-				{
-					be32enc(&endiandata[19], foundNonces[1]);
-					lyra2v2_hash(vhash64, endiandata);
-					pdata[21] = foundNonces[1];
-					if (bn_hash_target_ratio(vhash64, ptarget) > work->shareratio) {
-						work_set_target_ratio(work, vhash64);
-						xchg(pdata[19], pdata[21]);
-					}
-					res++;
+			const uint32_t Htarg = ptarget[7];
+			uint32_t _ALIGN(64) vhash[8];
+			be32enc(&endiandata[19], work->nonces[0]);
+			lyra2v2_hash(vhash, endiandata);
+
+			if (vhash[7] <= Htarg && fulltest(vhash, ptarget)) {
+				work->valid_nonces = 1;
+				work_set_target_ratio(work, vhash);
+				if (work->nonces[1] != 0) {
+					be32enc(&endiandata[19], work->nonces[1]);
+					lyra2v2_hash(vhash, endiandata);
+					bn_set_target_ratio(work, vhash, 1);
+					work->valid_nonces++;
+					pdata[19] = max(work->nonces[0], work->nonces[1]) + 1;
+				} else {
+					pdata[19] = work->nonces[0] + 1; // cursor
 				}
-				return res;
+				return work->valid_nonces;
 			}
-			else
-			{
-				gpulog(LOG_WARNING, thr_id, "result for %08x does not validate on CPU!", foundNonces[0]);
+			else if (vhash[7] > Htarg) {
+				gpu_increment_reject(thr_id);
+				if (!opt_quiet)
+				gpulog(LOG_WARNING, thr_id, "result for %08x does not validate on CPU!", work->nonces[0]);
+				pdata[19] = work->nonces[0] + 1;
+				continue;
 			}
 		}
 

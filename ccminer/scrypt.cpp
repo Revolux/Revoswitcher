@@ -43,8 +43,15 @@ using namespace Concurrency;
 #include <string.h>
 
 #include <emmintrin.h>
+#ifndef __APPLE__
 #include <malloc.h>
+#endif
 #include <new>
+
+#if _MSC_VER > 1800
+#undef _THROW1
+#define _THROW1(x) throw(std::bad_alloc)
+#endif
 
 // A thin wrapper around the builtin __m128i type
 class uint32x4_t
@@ -721,8 +728,9 @@ int scanhash_scrypt(int thr_id, struct work *work, uint32_t max_nonce, unsigned 
 		cudaDeviceSynchronize();
 		cudaDeviceReset();
 		cudaSetDevice(dev_id);
+
 		throughput = cuda_throughput(thr_id);
-		applog(LOG_INFO, "GPU #%d: cuda throughput is %d", dev_id, throughput);
+		gpulog(LOG_INFO, thr_id, "Intensity set to %g, %u cuda threads", throughput2intensity(throughput), throughput);
 
 		init[thr_id] = true;
 	}

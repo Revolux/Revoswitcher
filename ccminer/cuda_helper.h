@@ -25,7 +25,7 @@
 
 extern "C" short device_map[MAX_GPUS];
 extern "C"  long device_sm[MAX_GPUS];
-
+extern "C" short device_mpcount[MAX_GPUS];
 extern int cuda_arch[MAX_GPUS];
 
 // common functions
@@ -76,6 +76,12 @@ extern const uint3 threadIdx;
 #define ROTL32(x, n) __funnelshift_l( (x), (x), (n) )
 #define ROTR32(x, n) __funnelshift_r( (x), (x), (n) )
 #endif
+
+#define AS_U32(addr)   *((uint32_t*)(addr))
+#define AS_U64(addr)   *((uint64_t*)(addr))
+#define AS_UINT2(addr) *((uint2*)(addr))
+#define AS_UINT4(addr) *((uint4*)(addr))
+#define AS_UL2(addr)   *((ulonglong2*)(addr))
 
 __device__ __forceinline__ uint64_t MAKE_ULONGLONG(uint32_t LO, uint32_t HI)
 {
@@ -481,31 +487,12 @@ static __device__ __forceinline__ uint2 operator~ (uint2 a) { return make_uint2(
 static __device__ __forceinline__ void operator^= (uint2 &a, uint2 b) { a = a ^ b; }
 
 static __device__ __forceinline__ uint2 operator+ (uint2 a, uint2 b) {
-#ifdef __CUDA_ARCH__
-	uint2 result;
-	asm("{ // uint2 a+b \n\t"
-		"add.cc.u32 %0, %2, %4; \n\t"
-		"addc.u32   %1, %3, %5; \n\t"
-	"}\n" : "=r"(result.x), "=r"(result.y) : "r"(a.x), "r"(a.y), "r"(b.x), "r"(b.y));
-	return result;
-#else
 	return vectorize(devectorize(a) + devectorize(b));
-#endif
 }
 static __device__ __forceinline__ void operator+= (uint2 &a, uint2 b) { a = a + b; }
 
-
 static __device__ __forceinline__ uint2 operator- (uint2 a, uint2 b) {
-#if defined(__CUDA_ARCH__) && CUDA_VERSION < 7000
-	uint2 result;
-	asm("{ // uint2 a-b \n\t"
-		"sub.cc.u32 %0, %2, %4; \n\t"
-		"subc.u32   %1, %3, %5; \n\t"
-	"}\n" : "=r"(result.x), "=r"(result.y) : "r"(a.x), "r"(a.y), "r"(b.x), "r"(b.y));
-	return result;
-#else
 	return vectorize(devectorize(a) - devectorize(b));
-#endif
 }
 static __device__ __forceinline__ void operator-= (uint2 &a, uint2 b) { a = a - b; }
 

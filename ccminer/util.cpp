@@ -36,6 +36,8 @@
 #include "miner.h"
 #include "elist.h"
 
+#include "crypto/xmr-rpc.h"
+
 extern pthread_mutex_t stratum_sock_lock;
 extern pthread_mutex_t stratum_work_lock;
 extern bool opt_debug_diff;
@@ -209,35 +211,31 @@ void get_defconfig_path(char *out, size_t bufsize, char *argv0)
 #endif
 }
 
-void format_hashrate(double hashrate, char *output)
+void format_hashrate_unit(double hashrate, char *output, const char *unit)
 {
-	char prefix = '\0';
+	char prefix[2] = { 0, 0 };
 
 	if (hashrate < 10000) {
 		// nop
 	}
 	else if (hashrate < 1e7) {
-		prefix = 'k';
+		prefix[0] = 'k';
 		hashrate *= 1e-3;
 	}
 	else if (hashrate < 1e10) {
-		prefix = 'M';
+		prefix[0] = 'M';
 		hashrate *= 1e-6;
 	}
 	else if (hashrate < 1e13) {
-		prefix = 'G';
+		prefix[0] = 'G';
 		hashrate *= 1e-9;
 	}
 	else {
-		prefix = 'T';
+		prefix[0] = 'T';
 		hashrate *= 1e-12;
 	}
 
-	sprintf(
-		output,
-		prefix ? "%.2f %cH/s" : "%.2f H/s%c",
-		hashrate, prefix
-	);
+	sprintf(output, "%.2f %s%s", hashrate, prefix, unit);
 }
 
 static void databuf_free(struct data_buffer *db)
@@ -1177,14 +1175,27 @@ static bool stratum_parse_extranonce(struct stratum_ctx *sctx, json_t *params, i
 	}
 	xn2_size = (int) json_integer_value(json_array_get(params, pndx+1));
 	if (!xn2_size) {
-		applog(LOG_ERR, "Failed to get extranonce2_size");
-		goto out;
+		char algo[64] = { 0 };
+		get_currentalgo(algo, sizeof(algo));
+		if (strcmp(algo, "equihash") == 0) {
+			int xn1_size = (int)strlen(xnonce1) / 2;
+			xn2_size = 32 - xn1_size;
+			if (xn1_size < 4 || xn1_size > 12) {
+				// This miner iterates the nonces at data32[30]
+				applog(LOG_ERR, "Unsupported extranonce size of %d (12 maxi)", xn1_size);
+				goto out;
+			}
+			goto skip_n2;
+		} else {
+			applog(LOG_ERR, "Failed to get extranonce2_size");
+			goto out;
+		}
 	}
 	if (xn2_size < 2 || xn2_size > 16) {
-		applog(LOG_INFO, "Failed to get valid n2size in parse_extranonce");
+		applog(LOG_ERR, "Failed to get valid n2size in parse_extranonce (%d)", xn2_size);
 		goto out;
 	}
-
+skip_n2:
 	pthread_mutex_lock(&stratum_work_lock);
 	if (sctx->xnonce1)
 		free(sctx->xnonce1);
@@ -1215,6 +1226,8 @@ bool stratum_subscribe(struct stratum_ctx *sctx)
 	json_t *val = NULL, *res_val, *err_val;
 	json_error_t err;
 	bool ret = false, retry = false;
+
+	if (sctx->rpc2) return true;
 
 start:
 	s = (char*)malloc(128 + (sctx->session_id ? strlen(sctx->session_id) : 0));
@@ -1306,6 +1319,9 @@ bool stratum_authorize(struct stratum_ctx *sctx, const char *user, const char *p
 	char *s, *sret;
 	json_error_t err;
 	bool ret = false;
+
+	if (sctx->rpc2)
+		return rpc2_stratum_authorize(sctx, user, pass);
 
 	s = (char*)malloc(80 + strlen(user) + strlen(pass));
 	sprintf(s, "{\"id\": 2, \"method\": \"mining.authorize\", \"params\": [\"%s\", \"%s\"]}",
@@ -1433,6 +1449,10 @@ static bool stratum_notify(struct stratum_ctx *sctx, json_t *params)
 	char algo[64] = { 0 };
 	get_currentalgo(algo, sizeof(algo));
 	bool has_claim = !strcasecmp(algo, "lbry");
+
+	if (sctx->is_equihash) {
+		return equi_stratum_notify(sctx, params);
+	}
 
 	job_id = json_string_value(json_array_get(params, p++));
 	prevhash = json_string_value(json_array_get(params, p++));
@@ -1621,6 +1641,12 @@ static bool stratum_get_algo(struct stratum_ctx *sctx, json_t *id, json_t *param
 extern char driver_version[32];
 extern int cuda_arch[MAX_GPUS];
 
+void gpu_increment_reject(int thr_id)
+{
+	struct cgpu_info *gpu = &thr_info[thr_id].gpu;
+	if (gpu) gpu->rejected++;
+}
+
 static bool json_object_set_error(json_t *result, int code, const char *msg)
 {
 	json_t *val = json_object();
@@ -1636,7 +1662,7 @@ static bool stratum_benchdata(json_t *result, json_t *params, int thr_id)
 	char vid[32], arch[8], driver[32];
 	char *card;
 	char os[8];
-	uint32_t watts = 0;
+	uint32_t watts = 0, plimit = 0;
 	int dev_id = device_map[thr_id];
 	int cuda_ver = cuda_version();
 	struct cgpu_info *cgpu = &thr_info[thr_id].gpu;
@@ -1653,9 +1679,13 @@ static bool stratum_benchdata(json_t *result, json_t *params, int thr_id)
 	cuda_gpu_info(cgpu);
 #ifdef USE_WRAPNVML
 	cgpu->has_monitoring = true;
-	cgpu->gpu_power = gpu_power(cgpu); // mWatts
+	if (cgpu->monitor.gpu_power)
+		cgpu->gpu_power = cgpu->monitor.gpu_power;
+	else
+		cgpu->gpu_power = gpu_power(cgpu); // mWatts
 	watts = (cgpu->gpu_power >= 1000) ? cgpu->gpu_power / 1000 : 0; // ignore nvapi %
-	gpu_info(cgpu);
+	plimit = device_plimit[dev_id] > 0 ? device_plimit[dev_id] : 0;
+	gpu_info(cgpu); // vid/pid
 #endif
 	get_currentalgo(algo, sizeof(algo));
 
@@ -1679,7 +1709,10 @@ static bool stratum_benchdata(json_t *result, json_t *params, int thr_id)
 	json_object_set_new(val, "arch", json_string(arch));
 	json_object_set_new(val, "freq", json_integer(cgpu->gpu_clock/1000));
 	json_object_set_new(val, "memf", json_integer(cgpu->gpu_memclock/1000));
+	json_object_set_new(val, "curr_freq", json_integer(cgpu->monitor.gpu_clock));
+	json_object_set_new(val, "curr_memf", json_integer(cgpu->monitor.gpu_memclock));
 	json_object_set_new(val, "power", json_integer(watts));
+	json_object_set_new(val, "plimit", json_integer(plimit));
 	json_object_set_new(val, "khashes", json_real(cgpu->khashes));
 	json_object_set_new(val, "intensity", json_real(cgpu->intensity));
 	json_object_set_new(val, "throughput", json_integer(cgpu->throughput));
@@ -1748,6 +1781,9 @@ static bool stratum_show_message(struct stratum_ctx *sctx, json_t *id, json_t *p
 	char *s;
 	json_t *val;
 	bool ret;
+
+	if (sctx->is_equihash)
+		return equi_stratum_show_message(sctx, id, params);
 
 	val = json_array_get(params, 0);
 	if (val)
@@ -1822,6 +1858,11 @@ bool stratum_handle_method(struct stratum_ctx *sctx, const char *s)
 		ret = stratum_set_difficulty(sctx, params);
 		goto out;
 	}
+	if (!strcasecmp(method, "mining.set_target")) {
+		sctx->is_equihash = true;
+		ret = equi_stratum_set_target(sctx, params);
+		goto out;
+	}
 	if (!strcasecmp(method, "mining.set_extranonce")) {
 		ret = stratum_parse_extranonce(sctx, params, 0);
 		goto out;
@@ -1847,6 +1888,10 @@ bool stratum_handle_method(struct stratum_ctx *sctx, const char *s)
 	}
 	if (!strcasecmp(method, "client.show_message")) { // common
 		ret = stratum_show_message(sctx, id, params);
+		goto out;
+	}
+	if (sctx->rpc2 && !strcasecmp(method, "job")) { // xmr/bbr
+		ret = rpc2_stratum_job(sctx, id, params);
 		goto out;
 	}
 
@@ -2092,7 +2137,7 @@ void do_gpu_tests(void)
 
 	memset(work.data, 0, sizeof(work.data));
 	work.data[0] = 0;
-	scanhash_lbry(0, &work, 1, &done);
+	scanhash_hmq17(0, &work, 1, &done);
 
 	free(work_restart);
 	work_restart = NULL;
@@ -2115,6 +2160,9 @@ void print_hash_tests(void)
 
 	printf(CL_WHT "CPU HASH ON EMPTY BUFFER RESULTS:" CL_N "\n");
 
+	bastionhash(&hash[0], &buf[0]);
+	printpfx("bastion", hash);
+
 	blake256hash(&hash[0], &buf[0], 8);
 	printpfx("blakecoin", hash);
 
@@ -2129,6 +2177,12 @@ void print_hash_tests(void)
 
 	c11hash(&hash[0], &buf[0]);
 	printpfx("c11", hash);
+
+	cryptolight_hash(&hash[0], &buf[0], 76);
+	printpfx("cryptolight", hash);
+
+	cryptonight_hash(&hash[0], &buf[0], 76);
+	printpfx("cryptonight", hash);
 
 	memset(buf, 0, 180);
 	decred_hash(&hash[0], &buf[0]);
@@ -2149,8 +2203,11 @@ void print_hash_tests(void)
 	heavycoin_hash(&hash[0], &buf[0], 32);
 	printpfx("heavy", hash);
 
-	jackpothash(&hash[0], &buf[0]);
-	printpfx("jackpot", hash);
+	hmq17hash(&hash[0], &buf[0]);
+	printpfx("hmq1725", hash);
+
+	jha_hash(&hash[0], &buf[0]);
+	printpfx("jha", hash);
 
 	keccak256_hash(&hash[0], &buf[0]);
 	printpfx("keccak", hash);
@@ -2167,6 +2224,9 @@ void print_hash_tests(void)
 
 	lyra2v2_hash(&hash[0], &buf[0]);
 	printpfx("lyra2v2", hash);
+
+	lyra2Z_hash(&hash[0], &buf[0]);
+	printpfx("lyra2z", hash);
 
 	myriadhash(&hash[0], &buf[0]);
 	printpfx("myriad", hash);
@@ -2192,6 +2252,15 @@ void print_hash_tests(void)
 	scryptjane_hash(&hash[0], &buf[0]);
 	printpfx("scrypt-jane", hash);
 
+	sha256d_hash(&hash[0], &buf[0]);
+	printpfx("sha256d", hash);
+
+	sha256t_hash(&hash[0], &buf[0]);
+	printpfx("sha256t", hash);
+
+	blake2b_hash(&hash[0], &buf[0]);
+	printpfx("sia", hash);
+
 	sibhash(&hash[0], &buf[0]);
 	printpfx("sib", hash);
 
@@ -2201,11 +2270,26 @@ void print_hash_tests(void)
 	skein2hash(&hash[0], &buf[0]);
 	printpfx("skein2", hash);
 
+	skunk_hash(&hash[0], &buf[0]);
+	printpfx("skunk", hash);
+
 	s3hash(&hash[0], &buf[0]);
 	printpfx("S3", hash);
 
+	timetravel_hash(&hash[0], &buf[0]);
+	printpfx("timetravel", hash);
+
+	bitcore_hash(&hash[0], &buf[0]);
+	printpfx("bitcore", hash);
+
 	blake256hash(&hash[0], &buf[0], 8);
 	printpfx("vanilla", hash);
+
+	tribus_hash(&hash[0], &buf[0]);
+	printpfx("tribus", hash);
+
+	veltorhash(&hash[0], &buf[0]);
+	printpfx("veltor", hash);
 
 	wcoinhash(&hash[0], &buf[0]);
 	printpfx("whirlpool", hash);

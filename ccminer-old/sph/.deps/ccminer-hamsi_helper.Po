@@ -1,0 +1,3 @@
+sph/ccminer-hamsi_helper.o: sph/hamsi_helper.c /usr/include/stdc-predef.h
+
+/usr/include/stdc-predef.h:

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #MINER NAME
-NAME=amir.FRM4
+NAME=amir.ethos3
 
 
 ## DONT TOUCH THESE
