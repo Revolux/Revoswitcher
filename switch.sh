@@ -26,19 +26,32 @@ ${CURDIR}/ethminer/ethminer -U -S us-east.ethash-hub.miningpoolhub.com:12020 -O 
               & PID=$! && echo $PID >$PIDFILE ; wait $PID || true; })
 
 #myr-gr
-${CURDIR}/ccminer/ccminer -r 0 -a myr-gr -o stratum+tcp://hub.miningpoolhub.com:12005 -O ${NAME}:x
+(PIDFILE=$(mktemp /tmp/foo.XXXXXX) && trap "rm $PIDFILE" 0 \
+         && { (unbuffer ${CURDIR}/ccminer/ccminer -r 0 -a myr-gr -o stratum+tcp://hub.miningpoolhub.com:12005 -O ${NAME}:x) \
+                  1> >(tee >(grep -q "...terminating workio thread" && kill $(cat $PIDFILE)) >&1) \
+              & PID=$! && echo $PID >$PIDFILE ; wait $PID || true; })
 
 #Lyra2Rev2
-${CURDIR}/ccminer/ccminer -r 0 -a lyra2v2 -o stratum+tcp://hub.miningpoolhub.com:12018 -O ${NAME}:x 
+(PIDFILE=$(mktemp /tmp/foo.XXXXXX) && trap "rm $PIDFILE" 0 \
+         && { (unbuffer ${CURDIR}/ccminer/ccminer -r 0 -a lyra2v2 -o stratum+tcp://hub.miningpoolhub.com:12018 -O ${NAME}:x) \
+                  1> >(tee >(grep -q "...terminating workio thread" && kill $(cat $PIDFILE)) >&1) \
+              & PID=$! && echo $PID >$PIDFILE ; wait $PID || true; })
+
 
 #monero
 ${CURDIR}/monero/xmrMiner/build/xmrMiner -r 0 -R 4 -l 16x54 -o stratum+tcp://us-east.cryptonight-hub.miningpoolhub.com:12024 -O ${NAME}:x -D
 
 #Feathercoin (NEOSCRYPT)
-${CURDIR}/ccminer/ccminer -r 0 -a neoscrypt -o stratum+tcp://hub.miningpoolhub.com:12012 -O ${NAME}:x 
+(PIDFILE=$(mktemp /tmp/foo.XXXXXX) && trap "rm $PIDFILE" 0 \
+         && { (unbuffer ${CURDIR}/ccminer/ccminer -r 0 -a neoscrypt -o stratum+tcp://hub.miningpoolhub.com:12012 -O ${NAME}:x) \
+                  1> >(tee >(grep -q "...terminating workio thread" && kill $(cat $PIDFILE)) >&1) \
+              & PID=$! && echo $PID >$PIDFILE ; wait $PID || true; }) 
 
 #skein
-${CURDIR}/ccminer/ccminer -r 0 -a skein -o stratum+tcp://hub.miningpoolhub.com:12016 -O ${NAME}:x 
+(PIDFILE=$(mktemp /tmp/foo.XXXXXX) && trap "rm $PIDFILE" 0 \
+         && { (unbuffer ${CURDIR}/ccminer/ccminer -r 0 -a skein -o stratum+tcp://hub.miningpoolhub.com:12016 -O ${NAME}:x ) \
+                  1> >(tee >(grep -q "...terminating workio thread" && kill $(cat $PIDFILE)) >&1) \
+              & PID=$! && echo $PID >$PIDFILE ; wait $PID || true; }) 
 
 #Equihash
 (PIDFILE=$(mktemp /tmp/foo.XXXXXX) && trap "rm $PIDFILE" 0 \
