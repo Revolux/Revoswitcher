@@ -6,7 +6,7 @@ NAME=amir.ethos3
 
 ## DONT TOUCH THESE
 CURDIR=`dirname $0`
-echo 'revolux123' | sudo -S `dirname $0`/overclock.sh
+sudo {$CURDIR}/overclock.sh
 ####
 
 ## YOU CAN CHANGE THIS FROM INFINITE LOOP TO 
@@ -55,8 +55,8 @@ ${CURDIR}/monero/xmrMiner/build/xmrMiner -r 0 -R 4 -l 16x54 -o stratum+tcp://us-
 
 #Equihash
 (PIDFILE=$(mktemp /tmp/foo.XXXXXX) && trap "rm $PIDFILE" 0 \
-         && { (unbuffer ${CURDIR}/zcash/miner --eexit 3 --intensity 64 --templimit 80 --server us-east.equihash-hub.miningpoolhub.com --port 12023 --user ${NAME} --pass x) \
-                  1> >(tee >(grep -q "Total speed: 0 Sol/s" && kill $(cat $PIDFILE)) >&1) \
+         && { (unbuffer ${CURDIR}/zcash/miner --eexit 3 --intensity 64 --server us-east.equihash-hub.miningpoolhub.com --port 12023 --user ${NAME} --pass x) \
+                  1> >(tee >(grep -q "placeholdertext" && kill $(cat $PIDFILE)) >&1) \
               & PID=$! && echo $PID >$PIDFILE ; wait $PID || true; })
 done
 
