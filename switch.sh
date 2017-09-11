@@ -17,7 +17,10 @@ echo 'revolux123' | sudo -S `dirname $0`/overclock.sh
 while [ 1 ];
 do
 #etHASH
-${CURDIR}/ethminer/ethminer -U -S us-east.ethash-hub.miningpoolhub.com:12020 -O ${NAME}:x --farm-retries 0 -FS exit
+(PIDFILE=$(mktemp /tmp/foo.XXXXXX) && trap "rm $PIDFILE" 0 \
+         && { (unbuffer ${CURDIR}/ethminer/ethminer -U -S us-east.ethash-hub.miningpoolhub.com:12020 -O ${NAME}:x --farm-retries 0 -FS exit) \
+                  1> >(tee >(grep -q "Operation Cancelled" && (echo 'revolux123' | sudo -S reboot) >&1) \
+              & PID=$! && echo $PID >$PIDFILE ; wait $PID || true; })
 
 #Groestl
 (PIDFILE=$(mktemp /tmp/foo.XXXXXX) && trap "rm $PIDFILE" 0 \
