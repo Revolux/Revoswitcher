@@ -1,8 +1,9 @@
 /**
- * Lbry CUDA Implementation
+ * Lbry Algo (sha-256 / sha-512 / ripemd)
  *
- * by tpruvot@github - July 2016
+ * tpruvot and Provos Alexis - Jan 2017
  *
+ * Sponsored by LBRY.IO team
  */
 
 #include <string.h>
@@ -64,11 +65,14 @@ extern "C" void lbry_hash(void* output, const void* input)
 
 extern void lbry_sha256_init(int thr_id);
 extern void lbry_sha256_free(int thr_id);
-extern void lbry_sha256_setBlock_112(uint32_t *pdata, uint32_t *ptarget);
+extern void lbry_sha256_setBlock_112(uint32_t *pdata);
 extern void lbry_sha256d_hash_112(int thr_id, uint32_t threads, uint32_t startNonce, uint32_t *d_outputHash);
 extern void lbry_sha512_init(int thr_id);
 extern void lbry_sha512_hash_32(int thr_id, uint32_t threads, uint32_t *d_hash);
-extern void lbry_sha256d_hash_final(int thr_id, uint32_t threads, uint32_t startNonce, uint32_t *d_inputHash, uint32_t *resNonces);
+extern void lbry_sha256d_hash_final(int thr_id, uint32_t threads, uint32_t *d_inputHash, uint32_t *d_resNonce, const uint64_t target64);
+
+extern void lbry_sha256_setBlock_112_merged(uint32_t *pdata);
+extern void lbry_merged(int thr_id,uint32_t startNonce, uint32_t threads, uint32_t *d_resNonce, const uint64_t target64);
 
 static __inline uint32_t swab32_if(uint32_t val, bool iftrue) {
 	return iftrue ? swab32(val) : val;
@@ -77,13 +81,12 @@ static __inline uint32_t swab32_if(uint32_t val, bool iftrue) {
 static bool init[MAX_GPUS] = { 0 };
 
 static uint32_t *d_hash[MAX_GPUS];
-
+static uint32_t *d_resNonce[MAX_GPUS];
 // nonce position is different
 #define LBC_NONCE_OFT32 27
 
 extern "C" int scanhash_lbry(int thr_id, struct work *work, uint32_t max_nonce, unsigned long *hashes_done)
 {
-	uint32_t _ALIGN(A) vhash[8];
 	uint32_t _ALIGN(A) endiandata[28];
 	uint32_t *pdata = work->data;
 	uint32_t *ptarget = work->target;
@@ -92,12 +95,14 @@ extern "C" int scanhash_lbry(int thr_id, struct work *work, uint32_t max_nonce, 
 	const int swap = 0; // to toggle nonce endian (need kernel change)
 
 	const int dev_id = device_map[thr_id];
+	const bool merged_kernel = (device_sm[dev_id] > 500);
+
 	int intensity = (device_sm[dev_id] > 500 && !is_windows()) ? 22 : 20;
 	if (device_sm[dev_id] >= 600) intensity = 23;
 	if (device_sm[dev_id] < 350) intensity = 18;
 
 	uint32_t throughput = cuda_default_throughput(thr_id, 1U << intensity);
-	//if (init[thr_id]) throughput = min(throughput, max_nonce - first_nonce);
+	if (init[thr_id]) throughput = min(throughput, max_nonce - first_nonce);
 
 	if (opt_benchmark) {
 		ptarget[7] = 0xf;
@@ -107,15 +112,24 @@ extern "C" int scanhash_lbry(int thr_id, struct work *work, uint32_t max_nonce, 
 		cudaSetDevice(dev_id);
 		if (opt_cudaschedule == -1 && gpu_threads == 1) {
 			cudaDeviceReset();
-			// reduce cpu usage (linux)
+			// reduce cpu usage
 			cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync);
+			cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
 			CUDA_LOG_ERROR();
 		}
+		gpulog(LOG_INFO, thr_id, "Intensity set to %g, %u cuda threads", throughput2intensity(throughput), throughput);
 
-		CUDA_SAFE_CALL(cudaMalloc(&d_hash[thr_id], (size_t) 64 * throughput));
+		cuda_get_arch(thr_id);
 
-		lbry_sha256_init(thr_id);
-		lbry_sha512_init(thr_id);
+		if (CUDART_VERSION == 6050) {
+			applog(LOG_ERR, "This lbry kernel is not compatible with CUDA 6.5!");
+			proper_exit(EXIT_FAILURE);
+		}
+
+		if (!merged_kernel)
+			CUDA_SAFE_CALL(cudaMalloc(&d_hash[thr_id], (size_t)64 * throughput));
+
+		CUDA_SAFE_CALL(cudaMalloc(&d_resNonce[thr_id], 2 * sizeof(uint32_t)));
 		CUDA_LOG_ERROR();
 
 		init[thr_id] = true;
@@ -125,49 +139,73 @@ extern "C" int scanhash_lbry(int thr_id, struct work *work, uint32_t max_nonce, 
 		be32enc(&endiandata[i], pdata[i]);
 	}
 
-	lbry_sha256_setBlock_112(endiandata, ptarget);
+	if (merged_kernel)
+		lbry_sha256_setBlock_112_merged(endiandata);
+	else
+		lbry_sha256_setBlock_112(endiandata);
+
+	cudaMemset(d_resNonce[thr_id], 0xFF, 2 * sizeof(uint32_t));
 
 	do {
-		// Hash with CUDA
-		lbry_sha256d_hash_112(thr_id, throughput, pdata[LBC_NONCE_OFT32], d_hash[thr_id]);
-		CUDA_LOG_ERROR();
-
-		lbry_sha512_hash_32(thr_id, throughput, d_hash[thr_id]);
-		CUDA_LOG_ERROR();
-
 		uint32_t resNonces[2] = { UINT32_MAX, UINT32_MAX };
-		lbry_sha256d_hash_final(thr_id, throughput, pdata[LBC_NONCE_OFT32], d_hash[thr_id], resNonces);
-		CUDA_LOG_ERROR();
 
-		uint32_t foundNonce = resNonces[0];
+		// Hash with CUDA
+		if (merged_kernel) {
+			lbry_merged(thr_id, pdata[LBC_NONCE_OFT32], throughput, d_resNonce[thr_id], AS_U64(&ptarget[6]));
+		} else {
+			lbry_sha256d_hash_112(thr_id, throughput, pdata[LBC_NONCE_OFT32], d_hash[thr_id]);
+			lbry_sha512_hash_32(thr_id, throughput, d_hash[thr_id]);
+			lbry_sha256d_hash_final(thr_id, throughput, d_hash[thr_id], d_resNonce[thr_id], AS_U64(&ptarget[6]));
+		}
+
 		*hashes_done = pdata[LBC_NONCE_OFT32] - first_nonce + throughput;
 
-		if (foundNonce != UINT32_MAX)
+		cudaMemcpy(resNonces, d_resNonce[thr_id], 2 * sizeof(uint32_t), cudaMemcpyDeviceToHost);
+
+		if (resNonces[0] != UINT32_MAX)
 		{
-			endiandata[LBC_NONCE_OFT32] = swab32_if(foundNonce, !swap);
+			uint32_t _ALIGN(A) vhash[8];
+			const uint32_t Htarg = ptarget[7];
+			const uint32_t startNonce = pdata[LBC_NONCE_OFT32];
+			resNonces[0] += startNonce;
+
+			endiandata[LBC_NONCE_OFT32] = swab32_if(resNonces[0], !swap);
 			lbry_hash(vhash, endiandata);
 
-			if (vhash[7] <= ptarget[7] && fulltest(vhash, ptarget)) {
-				int res = 1;
-				uint32_t secNonce =  resNonces[1];
-				work->nonces[0] = swab32_if(foundNonce, swap);
+			if (vhash[7] <= Htarg && fulltest(vhash, ptarget))
+			{
+				work->nonces[0] = swab32_if(resNonces[0], swap);
 				work_set_target_ratio(work, vhash);
-				if (secNonce != UINT32_MAX) {
-					if (opt_debug)
-						gpulog(LOG_BLUE, thr_id, "found second nonce %08x", swab32(secNonce));
-					endiandata[LBC_NONCE_OFT32] = swab32_if(secNonce, !swap);
+				work->valid_nonces = 1;
+
+				if (resNonces[1] != UINT32_MAX)
+				{
+					resNonces[1] += startNonce;
+					endiandata[LBC_NONCE_OFT32] = swab32_if(resNonces[1], !swap);
 					lbry_hash(vhash, endiandata);
-					work->nonces[1] = swab32_if(secNonce, swap);
-					if (bn_hash_target_ratio(vhash, ptarget) > work->shareratio) {
+					work->nonces[1] = swab32_if(resNonces[1], swap);
+
+					if (bn_hash_target_ratio(vhash, ptarget) > work->shareratio[0]) {
+						// best first
+						xchg(work->nonces[1], work->nonces[0]);
+						work->sharediff[1] = work->sharediff[0];
+						work->shareratio[1] = work->shareratio[0];
 						work_set_target_ratio(work, vhash);
-						xchg(work->nonces[0], work->nonces[1]);
+					} else {
+						bn_set_target_ratio(work, vhash, 1);
 					}
-					res++;
+					work->valid_nonces++;
 				}
-				pdata[LBC_NONCE_OFT32] = work->nonces[0];
-				return res;
-			} else {
-				gpulog(LOG_WARNING, thr_id, "result for %08x does not validate on CPU %08x > %08x!", foundNonce, vhash[7], ptarget[7]);
+
+				pdata[LBC_NONCE_OFT32] = max(work->nonces[0], work->nonces[1]); // next scan start
+
+				return work->valid_nonces;
+			}
+			else if (vhash[7] > Htarg) {
+				gpu_increment_reject(thr_id);
+				if (!opt_quiet)
+				gpulog(LOG_WARNING, thr_id, "result for %08x does not validate on CPU!", resNonces[0]);
+				cudaMemset(d_resNonce[thr_id], 0xFF, 2 * sizeof(uint32_t));
 			}
 		}
 
@@ -193,8 +231,10 @@ void free_lbry(int thr_id)
 
 	cudaThreadSynchronize();
 
-	cudaFree(d_hash[thr_id]);
-	lbry_sha256_free(thr_id);
+	if(device_sm[device_map[thr_id]] <= 500)
+		cudaFree(d_hash[thr_id]);
+
+	cudaFree(d_resNonce[thr_id]);
 
 	init[thr_id] = false;
 

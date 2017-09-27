@@ -34,15 +34,19 @@ static uint32_t device_bus_ids[MAX_GPUS] = { 0 };
 
 extern uint32_t device_gpu_clocks[MAX_GPUS];
 extern uint32_t device_mem_clocks[MAX_GPUS];
-extern uint32_t device_plimit[MAX_GPUS];
+extern int32_t device_mem_offsets[MAX_GPUS];
 extern uint8_t device_tlimit[MAX_GPUS];
 extern int8_t device_pstate[MAX_GPUS];
 extern int32_t device_led[MAX_GPUS];
 int32_t device_led_state[MAX_GPUS] = { 0 };
+static __thread bool has_rgb_ok = false;
 
 uint32_t clock_prev[MAX_GPUS] = { 0 };
 uint32_t clock_prev_mem[MAX_GPUS] = { 0 };
 uint32_t limit_prev[MAX_GPUS] = { 0 };
+
+static bool nvml_plimit_set = false;
+extern bool need_memclockrst;
 
 /*
  * Wrappers to emulate dlopen() on other systems like Windows
@@ -90,7 +94,7 @@ nvml_handle * nvml_create()
 	int i=0;
 	nvml_handle *nvmlh = NULL;
 
-#if defined(WIN32)
+#ifdef WIN32
 	/* Windows (do not use slashes, else ExpandEnvironmentStrings will mix them) */
 #define  libnvidia_ml "%PROGRAMFILES%\\NVIDIA Corporation\\NVSMI\\nvml.dll"
 #else
@@ -240,6 +244,7 @@ nvml_handle * nvml_create()
 	nvmlh->nvml_pci_domain_id = (unsigned int*) calloc(nvmlh->nvml_gpucount, sizeof(unsigned int));
 	nvmlh->nvml_pci_bus_id = (unsigned int*) calloc(nvmlh->nvml_gpucount, sizeof(unsigned int));
 	nvmlh->nvml_pci_device_id = (unsigned int*) calloc(nvmlh->nvml_gpucount, sizeof(unsigned int));
+	nvmlh->nvml_pci_vendor_id = (unsigned int*) calloc(nvmlh->nvml_gpucount, sizeof(unsigned int));
 	nvmlh->nvml_pci_subsys_id = (unsigned int*) calloc(nvmlh->nvml_gpucount, sizeof(unsigned int));
 	nvmlh->nvml_cuda_device_id = (int*) calloc(nvmlh->nvml_gpucount, sizeof(int));
 	nvmlh->cuda_nvml_device_id = (int*) calloc(nvmlh->cuda_gpucount, sizeof(int));
@@ -259,6 +264,7 @@ nvml_handle * nvml_create()
 		nvmlh->nvml_pci_domain_id[i] = pciinfo.domain;
 		nvmlh->nvml_pci_bus_id[i]    = pciinfo.bus;
 		nvmlh->nvml_pci_device_id[i] = pciinfo.device;
+		nvmlh->nvml_pci_vendor_id[i] = pciinfo.pci_device_id;
 		nvmlh->nvml_pci_subsys_id[i] = pciinfo.pci_subsystem_id;
 
 		nvmlh->app_clocks[i] = NVML_FEATURE_UNKNOWN;
@@ -306,6 +312,8 @@ int nvml_set_clocks(nvml_handle *nvmlh, int dev_id)
 	nvmlReturn_t rc;
 	uint32_t gpu_clk = 0, mem_clk = 0;
 	int n = nvmlh->cuda_nvml_device_id[dev_id];
+	//if (need_nvsettings) /* prefer later than init time */
+	//	nvs_set_clocks(dev_id);
 	if (n < 0 || n >= nvmlh->nvml_gpucount)
 		return -ENODEV;
 
@@ -391,6 +399,8 @@ int nvml_reset_clocks(nvml_handle *nvmlh, int dev_id)
 	nvmlReturn_t rc;
 	uint32_t gpu_clk = 0, mem_clk = 0;
 	int n = nvmlh->cuda_nvml_device_id[dev_id];
+	if (need_nvsettings)
+		nvs_reset_clocks(dev_id);
 	if (n < 0 || n >= nvmlh->nvml_gpucount)
 		return -ENODEV;
 
@@ -416,7 +426,6 @@ int nvml_reset_clocks(nvml_handle *nvmlh, int dev_id)
 	}
 	return ret;
 }
-
 
 /**
  * Set power state of a device (9xx)
@@ -524,8 +533,13 @@ int nvml_set_plimit(nvml_handle *nvmlh, int dev_id)
 	plimit = max(plimit, pmin);
 	rc = nvmlh->nvmlDeviceSetPowerManagementLimit(nvmlh->devs[n], plimit);
 	if (rc != NVML_SUCCESS) {
+#ifndef WIN32
 		applog(LOG_WARNING, "GPU #%d: plimit %s", dev_id, nvmlh->nvmlErrorString(rc));
+#endif
 		return -1;
+	} else {
+		device_plimit[dev_id] = plimit / 1000;
+		nvml_plimit_set = true;
 	}
 
 	if (!opt_quiet) {
@@ -535,6 +549,19 @@ int nvml_set_plimit(nvml_handle *nvmlh, int dev_id)
 
 	limit_prev[dev_id] = prev_limit;
 	return 1;
+}
+
+uint32_t nvml_get_plimit(nvml_handle *nvmlh, int dev_id)
+{
+	uint32_t plimit = 0;
+	int n = nvmlh ? nvmlh->cuda_nvml_device_id[dev_id] : -1;
+	if (n < 0 || n >= nvmlh->nvml_gpucount)
+		return 0;
+
+	if (nvmlh->nvmlDeviceGetPowerManagementLimit) {
+		nvmlh->nvmlDeviceGetPowerManagementLimit(nvmlh->devs[n], &plimit);
+	}
+	return plimit;
 }
 
 // ccminer -D -n
@@ -549,10 +576,19 @@ void nvml_print_device_info(int dev_id)
 
 	nvmlReturn_t rc;
 
+	// fprintf(stderr, "------ Hardware ------\n");
+	int gvid = hnvml->nvml_pci_vendor_id[n] & 0xFFFF;
+	int gpid = hnvml->nvml_pci_vendor_id[n] >> 16;
+	int svid = hnvml->nvml_pci_subsys_id[n] & 0xFFFF;
+	int spid = hnvml->nvml_pci_subsys_id[n] >> 16;
+
+	fprintf(stderr, LSTDEV_PFX "ID %04x:%04x/%04x:%04x BUS %04x:%02x:%02x.0\n", gvid, gpid, svid, spid,
+		(int) hnvml->nvml_pci_domain_id[n], (int) hnvml->nvml_pci_bus_id[n], (int) hnvml->nvml_pci_device_id[n]);
+
 	if (hnvml->nvmlDeviceGetClock) {
 		uint32_t gpu_clk = 0, mem_clk = 0;
 
-		fprintf(stderr, "------- Clocks -------\n");
+		// fprintf(stderr, "------- Clocks -------\n");
 
 		hnvml->nvmlDeviceGetClock(hnvml->devs[n], NVML_CLOCK_GRAPHICS, NVML_CLOCK_ID_APP_CLOCK_DEFAULT, &gpu_clk);
 		rc = hnvml->nvmlDeviceGetClock(hnvml->devs[n], NVML_CLOCK_MEM, NVML_CLOCK_ID_APP_CLOCK_DEFAULT, &mem_clk);
@@ -634,6 +670,22 @@ int nvml_get_fanpcnt(nvml_handle *nvmlh, int cudaindex, unsigned int *fanpcnt)
 	if (rc != NVML_SUCCESS) {
 		return -1;
 	}
+
+	return 0;
+}
+
+
+int nvml_get_current_clocks(int cudaindex, unsigned int *graphics_clock, unsigned int *mem_clock)
+{
+	nvmlReturn_t rc;
+	int gpuindex = hnvml->cuda_nvml_device_id[cudaindex];
+	if (gpuindex < 0 || gpuindex >= hnvml->nvml_gpucount) return -ENODEV;
+	if (!hnvml->nvmlDeviceGetClockInfo) return -ENOSYS;
+
+	rc = hnvml->nvmlDeviceGetClockInfo(hnvml->devs[gpuindex], NVML_CLOCK_SM, graphics_clock);
+	if (rc != NVML_SUCCESS) return -1;
+	rc = hnvml->nvmlDeviceGetClockInfo(hnvml->devs[gpuindex], NVML_CLOCK_MEM, mem_clock);
+	if (rc != NVML_SUCCESS) return -1;
 
 	return 0;
 }
@@ -748,9 +800,11 @@ int nvml_get_info(nvml_handle *nvmlh, int cudaindex, uint16_t &vid, uint16_t &pi
 		return -ENODEV;
 
 	subids = nvmlh->nvml_pci_subsys_id[gpuindex];
-	if (!subids) subids = nvmlh->nvml_pci_device_id[gpuindex];
+	if (!subids) subids = nvmlh->nvml_pci_vendor_id[gpuindex];
 	pid = subids >> 16;
 	vid = subids & 0xFFFF;
+	// Colorful and Inno3D
+	if (pid == 0) pid = nvmlh->nvml_pci_vendor_id[gpuindex] >> 16;
 	return 0;
 }
 
@@ -763,6 +817,7 @@ int nvml_destroy(nvml_handle *nvmlh)
 	free(nvmlh->nvml_pci_bus_id);
 	free(nvmlh->nvml_pci_device_id);
 	free(nvmlh->nvml_pci_domain_id);
+	free(nvmlh->nvml_pci_vendor_id);
 	free(nvmlh->nvml_pci_subsys_id);
 	free(nvmlh->nvml_cuda_device_id);
 	free(nvmlh->cuda_nvml_device_id);
@@ -905,6 +960,8 @@ int nvapi_getinfo(unsigned int devNum, uint16_t &vid, uint16_t &pid)
 	if (vid == 0x10DE && pSubSystemId) {
 		vid = pSubSystemId & 0xFFFF;
 		pid = pSubSystemId >> 16;
+		// Colorful and Inno3D
+		if (pid == 0) pid = pDeviceId >> 16;
 	}
 
 	return 0;
@@ -954,6 +1011,106 @@ int nvapi_getbios(unsigned int devNum, char *desc, unsigned int maxlen)
 		return -1;
 	}
 	return 0;
+}
+
+static int SetAsusRGBLogo(unsigned int devNum, uint32_t RGB, bool ignorePrevState)
+{
+	NvAPI_Status ret = NVAPI_OK;
+	NV_I2C_INFO_EX* i2cInfo;
+
+	int delay1 = 20000;
+	int delay2 = 0;
+
+	uchar4 rgb = { 0 };
+	memcpy(&rgb, &RGB, 4);
+	uchar4 prgb = { 0 };
+	int32_t prev = device_led_state[nvapi_devid(devNum)];
+	memcpy(&prgb, &prev, 4);
+
+	NV_INIT_STRUCT_ALLOC(NV_I2C_INFO_EX, i2cInfo);
+	if (i2cInfo == NULL) return -ENOMEM;
+
+	NvU32 data[5] = { 0 };
+	NvU32 datv[2] = { 0, 1 };
+	NvU32 datw[2] = { 1, 0 };
+	if (rgb.z != prgb.z || ignorePrevState) {
+		data[2] = 4; // R:4 G:5 B:6, Mode = 7 (1 static, 2 breath, 3 blink, 4 demo)
+		data[3] = 1;
+		datv[0] = rgb.z | 0x13384000;
+
+		i2cInfo->i2cDevAddress = 0x52;
+		i2cInfo->pbI2cRegAddress = (NvU8*) (&data[2]);
+		i2cInfo->regAddrSize = 1;
+		i2cInfo->pbData = (NvU8*) datv;
+		i2cInfo->cbRead = 5;
+		i2cInfo->cbSize = 1;
+		i2cInfo->portId = 1;
+		i2cInfo->bIsPortIdSet = 1;
+
+		ret = NvAPI_DLL_I2CWriteEx(phys[devNum], i2cInfo, datw);
+		usleep(delay1);
+		has_rgb_ok = (ret == NVAPI_OK);
+	}
+
+	if (rgb.y != prgb.y || ignorePrevState) {
+		data[2] = 5;
+		data[3] = 1;
+		datv[0] = rgb.y | 0x4000;
+
+		i2cInfo->i2cDevAddress = 0x52;
+		i2cInfo->pbI2cRegAddress = (NvU8*) (&data[2]);
+		i2cInfo->regAddrSize = 1;
+		i2cInfo->pbData = (NvU8*) datv;
+		i2cInfo->cbRead = 5;
+		i2cInfo->cbSize = 1;
+		i2cInfo->portId = 1;
+		i2cInfo->bIsPortIdSet = 1;
+
+		ret = NvAPI_DLL_I2CWriteEx(phys[devNum], i2cInfo, datw);
+		usleep(delay1);
+		has_rgb_ok = (ret == NVAPI_OK);
+	}
+
+	if (rgb.y != prgb.y || ignorePrevState) {
+		data[2] = 6;
+		data[3] = 1;
+		datv[0] = rgb.x | 0x4000;
+
+		i2cInfo->i2cDevAddress = 0x52;
+		i2cInfo->pbI2cRegAddress = (NvU8*) (&data[2]);
+		i2cInfo->regAddrSize = 1;
+		i2cInfo->pbData = (NvU8*) datv;
+		i2cInfo->cbRead = 5;
+		i2cInfo->cbSize = 1;
+		i2cInfo->portId = 1;
+		i2cInfo->bIsPortIdSet = 1;
+
+		ret = NvAPI_DLL_I2CWriteEx(phys[devNum], i2cInfo, datw);
+		usleep(delay1);
+		has_rgb_ok = (ret == NVAPI_OK);
+	}
+
+	if (rgb.w && ignorePrevState) {
+		data[2] = 7;
+		data[3] = 1;
+		datv[0] = rgb.w | 0x4000;
+
+		i2cInfo->i2cDevAddress = 0x52;
+		i2cInfo->pbI2cRegAddress = (NvU8*) (&data[2]);
+		i2cInfo->regAddrSize = 1;
+		i2cInfo->pbData = (NvU8*) datv;
+		i2cInfo->cbRead = 5;
+		i2cInfo->cbSize = 1;
+		i2cInfo->portId = 1;
+		i2cInfo->bIsPortIdSet = 1;
+
+		ret = NvAPI_DLL_I2CWriteEx(phys[devNum], i2cInfo, datw);
+		usleep(delay1);
+		has_rgb_ok = (ret == NVAPI_OK);
+	}
+	usleep(delay2);
+	free(i2cInfo);
+	return (int) ret;
 }
 
 static int SetGigabyteRGBLogo(unsigned int devNum, uint32_t RGB)
@@ -1065,6 +1222,10 @@ int nvapi_set_led(unsigned int devNum, int RGB, char *device_name)
 		if (opt_debug)
 			applog(LOG_DEBUG, "GPU %x: Set RGB led to %06x", (int) phys[devNum], RGB);
 		return SetGigabyteRGBLogo(devNum, (uint32_t) RGB);
+	} else if (strstr(device_name, "ASUS GTX 10")) {
+		if (opt_debug)
+			applog(LOG_DEBUG, "GPU %x: Set RGB led to %06x", (int) phys[devNum], RGB);
+		return SetAsusRGBLogo(devNum, (uint32_t) RGB, !has_rgb_ok);
 	} else if (strstr(device_name, "Zotac GTX 10")) {
 		if (opt_debug)
 			applog(LOG_DEBUG, "GPU %x: Set RGB led to %06x", (int) phys[devNum], RGB);
@@ -1231,7 +1392,16 @@ int nvapi_pstateinfo(unsigned int devNum)
 	}
 
 	uint32_t plim = nvapi_get_plimit(devNum);
-	applog(LOG_RAW, " Power limit is set to %u%%", plim);
+	double min_pw = 0, max_pw = 0; // percent
+
+	NVAPI_GPU_POWER_INFO nfo = { 0 };
+	nfo.version = NVAPI_GPU_POWER_INFO_VER;
+	ret = NvAPI_DLL_ClientPowerPoliciesGetInfo(phys[devNum], &nfo);
+	if (ret == NVAPI_OK && nfo.valid) {
+		min_pw = (double)nfo.entries[0].min_power / 1000;
+		max_pw = (double)nfo.entries[0].max_power / 1000;
+	}
+	applog(LOG_RAW, " Power limit is set to %u%%, range [%.0f-%.0f%%]", plim, min_pw, max_pw);
 
 #if 0
 	NVAPI_COOLER_SETTINGS *cooler;
@@ -1370,6 +1540,22 @@ int nvapi_pstateinfo(unsigned int devNum)
 #endif
 	free(mem);
 	return 0;
+}
+
+// workaround for buggy driver 378.49
+unsigned int nvapi_get_gpu_clock(unsigned int devNum)
+{
+	NvAPI_Status ret = NVAPI_OK;
+	unsigned int freq = 0;
+	NV_GPU_CLOCK_FREQUENCIES *freqs;
+	NV_INIT_STRUCT_ALLOC(NV_GPU_CLOCK_FREQUENCIES, freqs);
+	freqs->ClockType = NV_GPU_CLOCK_FREQUENCIES_CURRENT_FREQ;
+	ret = NvAPI_GPU_GetAllClockFrequencies(phys[devNum], freqs);
+	if (ret == NVAPI_OK) {
+		freq = freqs->domain[NVAPI_GPU_PUBLIC_CLOCK_GRAPHICS].frequency / 1000;
+	}
+	free(freqs);
+	return freq; // in MHz
 }
 
 uint8_t nvapi_get_plimit(unsigned int devNum)
@@ -1551,16 +1737,40 @@ int nvapi_set_memclock(unsigned int devNum, uint32_t clock)
 	return ret;
 }
 
+static int nvapi_set_memoffset(unsigned int devNum, int32_t delta, bool log=true)
+{
+	NvAPI_Status ret;
+	NvS32 deltaKHz = delta * 1000;
+
+	if (devNum >= nvapi_dev_cnt)
+		return -ENODEV;
+
+	// todo: bounds check with GetPstates20
+
+	NV_GPU_PERF_PSTATES20_INFO_V1 pset1 = { 0 };
+	pset1.version = NV_GPU_PERF_PSTATES20_INFO_VER1;
+	pset1.numPstates = 1;
+	pset1.numClocks = 1;
+	pset1.pstates[0].clocks[0].domainId = NVAPI_GPU_PUBLIC_CLOCK_MEMORY;
+	pset1.pstates[0].clocks[0].freqDelta_kHz.value = deltaKHz;
+	ret = NvAPI_DLL_SetPstates20v1(phys[devNum], &pset1);
+	if (ret == NVAPI_OK) {
+		if (log) applog(LOG_INFO, "GPU #%u: Memory clock offset set to %+d MHz", devNum, deltaKHz / 1000);
+		need_memclockrst = true;
+	}
+	return ret;
+}
+
 // Replacement for WIN32 CUDA 6.5 on pascal
-int nvapiMemGetInfo(int dev_id, size_t *free, size_t *total)
+int nvapiMemGetInfo(int dev_id, uint64_t *free, uint64_t *total)
 {
 	NvAPI_Status ret = NVAPI_OK;
 	NV_DISPLAY_DRIVER_MEMORY_INFO mem = { 0 };
 	mem.version = NV_DISPLAY_DRIVER_MEMORY_INFO_VER;
 	unsigned int devNum = nvapi_dev_map[dev_id % MAX_GPUS];
 	if ((ret = NvAPI_GPU_GetMemoryInfo(phys[devNum], &mem)) == NVAPI_OK) {
-		*total = mem.dedicatedVideoMemory;// mem.availableDedicatedVideoMemory;
-		*free  = mem.curAvailableDedicatedVideoMemory;
+		*total = (uint64_t) mem.dedicatedVideoMemory;// mem.availableDedicatedVideoMemory;
+		*free  = (uint64_t) mem.curAvailableDedicatedVideoMemory;
 	}
 	return (int) ret;
 }
@@ -1569,7 +1779,7 @@ int nvapi_init()
 {
 	int num_gpus = cuda_num_devices();
 	NvAPI_Status ret = NvAPI_Initialize();
-	if (!ret == NVAPI_OK){
+	if (ret != NVAPI_OK) {
 		NvAPI_ShortString string;
 		NvAPI_GetErrorMessage(ret, string);
 		if (opt_debug)
@@ -1646,7 +1856,7 @@ int nvapi_init_settings()
 
 	for (int n=0; n < opt_n_threads; n++) {
 		int dev_id = device_map[n % MAX_GPUS];
-		if (device_plimit[dev_id]) {
+		if (device_plimit[dev_id] && !nvml_plimit_set) {
 			if (nvapi_set_plimit(nvapi_dev_map[dev_id], device_plimit[dev_id]) == NVAPI_OK) {
 				uint32_t res = nvapi_get_plimit(nvapi_dev_map[dev_id]);
 				gpulog(LOG_INFO, n, "Power limit is set to %u%%", res);
@@ -1660,15 +1870,23 @@ int nvapi_init_settings()
 			if (ret) {
 				NvAPI_ShortString string;
 				NvAPI_GetErrorMessage((NvAPI_Status) ret, string);
-				gpulog(LOG_WARNING, n, "Boost gpu clock %s", string);
+				gpulog(LOG_WARNING, n, "nvapi_set_gpuclock %s", string);
 			}
 		}
-		if (device_mem_clocks[dev_id]) {
+		if (device_mem_offsets[dev_id]) {
+			ret = nvapi_set_memoffset(nvapi_dev_map[dev_id], device_mem_offsets[dev_id]);
+			if (ret) {
+				NvAPI_ShortString string;
+				NvAPI_GetErrorMessage((NvAPI_Status)ret, string);
+				gpulog(LOG_WARNING, n, "nvapi_set_memoffset %s", string);
+			}
+		}
+		else if (device_mem_clocks[dev_id]) {
 			ret = nvapi_set_memclock(nvapi_dev_map[dev_id], device_mem_clocks[dev_id]);
 			if (ret) {
 				NvAPI_ShortString string;
 				NvAPI_GetErrorMessage((NvAPI_Status) ret, string);
-				gpulog(LOG_WARNING, n, "Boost mem clock %s", string);
+				gpulog(LOG_WARNING, n, "nvapi_set_memclock %s", string);
 			}
 		}
 		if (device_pstate[dev_id]) {
@@ -1686,9 +1904,27 @@ int nvapi_init_settings()
 	return ret;
 }
 
+void nvapi_toggle_clocks(int thr_id, bool enable)
+{
+	int dev_id = device_map[thr_id % MAX_GPUS];
+	if (device_mem_offsets[dev_id]) {
+		nvapi_set_memoffset(nvapi_dev_map[dev_id], enable ? device_mem_offsets[dev_id] : 0, false);
+	}
+}
+
 unsigned int nvapi_devnum(int dev_id)
 {
 	return nvapi_dev_map[dev_id];
+}
+
+int nvapi_devid(unsigned int devNum)
+{
+	for (int i=0; i < opt_n_threads; i++) {
+		int dev_id = device_map[i % MAX_GPUS];
+		if (nvapi_dev_map[dev_id] = devNum)
+			return dev_id;
+	}
+	return 0;
 }
 
 #endif /* WIN32 : Windows specific (nvapi) */
@@ -1800,6 +2036,23 @@ unsigned int gpu_power(struct cgpu_info *gpu)
 	return mw;
 }
 
+unsigned int gpu_plimit(struct cgpu_info *gpu)
+{
+	unsigned int mw = 0;
+	int support = -1;
+	if (hnvml) {
+		mw = nvml_get_plimit(hnvml, gpu->gpu_id);
+		support = (mw > 0);
+	}
+#ifdef WIN32
+	// NVAPI value is in % (< 100 so)
+	if (support == -1) {
+		mw = nvapi_get_plimit(nvapi_dev_map[gpu->gpu_id]);
+	}
+#endif
+	return mw;
+}
+
 static int translate_vendor_id(uint16_t vid, char *vendorname)
 {
 	struct VENDORS {
@@ -1807,6 +2060,7 @@ static int translate_vendor_id(uint16_t vid, char *vendorname)
 		const char *name;
 	} vendors[] = {
 		{ 0x1043, "ASUS" },
+		{ 0x1048, "Elsa" },
 		{ 0x107D, "Leadtek" },
 		{ 0x10B0, "Gainward" },
 		// { 0x10DE, "NVIDIA" },
@@ -1931,3 +2185,92 @@ void gpu_led_off(int dev_id)
 	}
 #endif
 }
+
+#ifdef USE_WRAPNVML
+extern double thr_hashrates[MAX_GPUS];
+extern bool opt_debug_threads;
+extern bool opt_hwmonitor;
+extern int num_cpus;
+
+void *monitor_thread(void *userdata)
+{
+	int thr_id = -1;
+
+	while (!abort_flag && !opt_quiet)
+	{
+		// This thread monitors card's power lazily during scans, one at a time...
+		thr_id = (thr_id + 1) % opt_n_threads;
+		struct cgpu_info *cgpu = &thr_info[thr_id].gpu;
+		int dev_id = cgpu->gpu_id; cudaSetDevice(dev_id);
+
+		if (hnvml != NULL && cgpu)
+		{
+			char khw[32] = { 0 };
+			uint64_t clock = 0, mem_clock = 0;
+			uint32_t fanpercent = 0, power = 0;
+			double tempC = 0, khs_per_watt = 0;
+			uint32_t counter = 0;
+			int max_loops = 1000;
+
+			pthread_cond_wait(&cgpu->monitor.sampling_signal, &cgpu->monitor.lock);
+
+			do {
+				unsigned int tmp_clock=0, tmp_memclock=0;
+				nvml_get_current_clocks(dev_id, &tmp_clock, &tmp_memclock);
+#ifdef WIN32
+				if (tmp_clock < 200) {
+					// workaround for buggy drivers 378.x (real clock)
+					tmp_clock = nvapi_get_gpu_clock(nvapi_dev_map[dev_id]);
+				}
+#endif
+				if (tmp_clock < 200) {
+					// some older cards only report a base clock with cuda props.
+					if (cuda_gpu_info(cgpu) == 0) {
+						tmp_clock = cgpu->gpu_clock/1000;
+						tmp_memclock = cgpu->gpu_memclock/1000;
+					}
+				}
+				clock += tmp_clock;
+				mem_clock += tmp_memclock;
+				tempC += gpu_temp(cgpu);
+				fanpercent += gpu_fanpercent(cgpu);
+				power += gpu_power(cgpu);
+				counter++;
+
+				usleep(50000);
+				if (abort_flag) goto abort;
+
+			} while (cgpu->monitor.sampling_flag && (--max_loops));
+
+			cgpu->monitor.gpu_temp = (uint32_t) (tempC/counter);
+			cgpu->monitor.gpu_fan = fanpercent/counter;
+			cgpu->monitor.gpu_power = power/counter;
+			cgpu->monitor.gpu_clock = (uint32_t) (clock/counter);
+			cgpu->monitor.gpu_memclock = (uint32_t) (mem_clock/counter);
+
+			if (power) {
+				khs_per_watt = stats_get_speed(thr_id, thr_hashrates[thr_id]);
+				khs_per_watt = khs_per_watt / ((double)power / counter);
+				format_hashrate(khs_per_watt * 1000, khw);
+				if (strlen(khw))
+					sprintf(&khw[strlen(khw)-1], "W %uW ", cgpu->monitor.gpu_power / 1000);
+			}
+
+			if (opt_hwmonitor && (time(NULL) - cgpu->monitor.tm_displayed) > 60) {
+				gpulog(LOG_INFO, thr_id, "%u MHz %s%uC FAN %u%%",
+					cgpu->monitor.gpu_clock/*, cgpu->monitor.gpu_memclock*/,
+					khw, cgpu->monitor.gpu_temp, cgpu->monitor.gpu_fan
+				);
+				cgpu->monitor.tm_displayed = (uint32_t)time(NULL);
+			}
+
+			pthread_mutex_unlock(&cgpu->monitor.lock);
+		}
+		usleep(500); // safety
+	}
+abort:
+	if (opt_debug_threads)
+		applog(LOG_DEBUG, "%s() died", __func__);
+	return NULL;
+}
+#endif

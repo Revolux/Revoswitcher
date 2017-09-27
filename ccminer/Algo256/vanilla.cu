@@ -378,6 +378,11 @@ extern "C" int scanhash_vanilla(int thr_id, struct work* work, uint32_t max_nonc
 	const uint32_t targetHigh   = ptarget[6];
 	int dev_id = device_map[thr_id];
 
+	int intensity = (device_sm[dev_id] > 500 && !is_windows()) ? 30 : 24;
+	if (device_sm[dev_id] < 350) intensity = 22;
+	uint32_t throughput = cuda_default_throughput(thr_id, 1U << intensity);
+	if (init[thr_id]) throughput = min(throughput, max_nonce - first_nonce);
+
 	if (!init[thr_id]) {
 		cudaSetDevice(dev_id);
 		if (opt_cudaschedule == -1 && gpu_threads == 1) {
@@ -387,6 +392,10 @@ extern "C" int scanhash_vanilla(int thr_id, struct work* work, uint32_t max_nonc
 			cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
 			CUDA_LOG_ERROR();
 		}
+		gpulog(LOG_INFO, thr_id, "Intensity set to %g, %u cuda threads", throughput2intensity(throughput), throughput);
+
+		cuda_get_arch(thr_id);
+
 		CUDA_CALL_OR_RET_X(cudaMalloc(&d_resNonce[thr_id], NBN * sizeof(uint32_t)), -1);
 		CUDA_CALL_OR_RET_X(cudaMallocHost(&h_resNonce[thr_id], NBN * sizeof(uint32_t)), -1);
 		cudaStreamCreate(&streams[thr_id]);
@@ -402,11 +411,6 @@ extern "C" int scanhash_vanilla(int thr_id, struct work* work, uint32_t max_nonc
 
 	vanilla_cpu_setBlock_16(thr_id,endiandata,&pdata[16]);
 
-	int intensity = (device_sm[dev_id] > 500 && !is_windows()) ? 30 : 24;
-	if (device_sm[dev_id] < 350) intensity = 22;
-	uint32_t throughput = cuda_default_throughput(thr_id, 1U << intensity);
-	if (init[thr_id]) throughput = min(throughput, max_nonce - first_nonce);
-
 	const dim3 grid((throughput + (NPT*TPB)-1)/(NPT*TPB));
 	const dim3 block(TPB);
 	int rc = 0;
@@ -414,6 +418,7 @@ extern "C" int scanhash_vanilla(int thr_id, struct work* work, uint32_t max_nonc
 	do {
 		vanilla_gpu_hash_16_8<<<grid,block, 0, streams[thr_id]>>>(throughput, pdata[19], d_resNonce[thr_id], targetHigh);
 		cudaMemcpyAsync(h_resNonce[thr_id], d_resNonce[thr_id], NBN*sizeof(uint32_t), cudaMemcpyDeviceToHost,streams[thr_id]);
+		*hashes_done = pdata[19] - first_nonce + throughput;
 		cudaStreamSynchronize(streams[thr_id]);
 
 		if (h_resNonce[thr_id][0] != UINT32_MAX){
@@ -427,31 +432,43 @@ extern "C" int scanhash_vanilla(int thr_id, struct work* work, uint32_t max_nonc
 			vanillahash(vhashcpu, endiandata, blakerounds);
 
 			if (vhashcpu[6] <= Htarg && fulltest(vhashcpu, ptarget)) {
-				rc = 1;
+				work->valid_nonces = 1;
+				work->nonces[0] = h_resNonce[thr_id][0];
 				work_set_target_ratio(work, vhashcpu);
-				*hashes_done = pdata[19] - first_nonce + throughput;
-				pdata[19] = h_resNonce[thr_id][0];
 #if NBN > 1
 				if (h_resNonce[thr_id][1] != UINT32_MAX) {
+					work->nonces[1] = h_resNonce[thr_id][1];
 					be32enc(&endiandata[19], h_resNonce[thr_id][1]);
 					vanillahash(vhashcpu, endiandata, blakerounds);
-					pdata[21] = h_resNonce[thr_id][1];
-					if (bn_hash_target_ratio(vhashcpu, ptarget) > work->shareratio) {
+					if (bn_hash_target_ratio(vhashcpu, ptarget) > work->shareratio[0]) {
 						work_set_target_ratio(work, vhashcpu);
-						xchg(pdata[19], pdata[21]);
+						xchg(work->nonces[0], work->nonces[1]);
 					}
-					rc = 2;
+					work->valid_nonces = 2;
+					pdata[19] = max(work->nonces[0], work->nonces[1]) + 1;
+				} else {
+					pdata[19] = work->nonces[0] + 1; // cursor
 				}
 #endif
-				return rc;
+				return work->valid_nonces;
 			}
-			else {
-				gpulog(LOG_WARNING, thr_id, "result for %08x does not validate on CPU!", h_resNonce[thr_id][0]);
+			else if (vhashcpu[6] > Htarg) {
+				gpu_increment_reject(thr_id);
+				if (!opt_quiet)
+					gpulog(LOG_WARNING, thr_id, "result for %08x does not validate on CPU!", h_resNonce[thr_id][0]);
+				pdata[19] = work->nonces[0] + 1;
+				continue;
 			}
 		}
 
+		if ((uint64_t) throughput + pdata[19] >= max_nonce) {
+			pdata[19] = max_nonce;
+			break;
+		}
+
 		pdata[19] += throughput;
-	} while (!work_restart[thr_id].restart && ((uint64_t)max_nonce > ((uint64_t)(pdata[19]) + (uint64_t)throughput)));
+
+	} while (!work_restart[thr_id].restart);
 
 	*hashes_done = pdata[19] - first_nonce;
 	MyStreamSynchronize(NULL, 0, dev_id);

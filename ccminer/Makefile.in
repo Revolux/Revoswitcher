@@ -81,6 +81,9 @@ host_triplet = @host@
 target_triplet = @target@
 bin_PROGRAMS = ccminer$(EXEEXT)
 @HAVE_WINDOWS_TRUE@am__append_1 = compat/winansi.c
+@HAVE_OSX_TRUE@am__append_2 = -I/usr/local/llvm/lib/clang/4.0.0/include
+@HAVE_OSX_TRUE@am__append_3 = -L/usr/local/llvm/lib
+@HAVE_OSX_TRUE@am__append_4 = -lomp
 subdir = .
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(top_srcdir)/configure $(am__configure_deps) \
@@ -102,48 +105,64 @@ am__ccminer_SOURCES_DIST = elist.h miner.h compat.h compat/inttypes.h \
 	compat/stdbool.h compat/unistd.h compat/sys/time.h \
 	compat/getopt/getopt.h crc32.c hefty1.c ccminer.cpp pools.cpp \
 	util.cpp bench.cpp bignum.cpp api.cpp hashlog.cpp nvml.cpp \
-	stats.cpp sysinfos.cpp cuda.cpp heavy/heavy.cu \
+	stats.cpp sysinfos.cpp cuda.cpp nvsettings.cpp \
+	equi/equi-stratum.cpp equi/equi.cpp equi/blake2/blake2bx.cpp \
+	equi/equihash.cpp equi/cuda_equi.cu heavy/heavy.cu \
 	heavy/cuda_blake512.cu heavy/cuda_blake512.h \
 	heavy/cuda_combine.cu heavy/cuda_combine.h \
 	heavy/cuda_groestl512.cu heavy/cuda_groestl512.h \
 	heavy/cuda_hefty1.cu heavy/cuda_hefty1.h \
 	heavy/cuda_keccak512.cu heavy/cuda_keccak512.h \
-	heavy/cuda_sha256.cu heavy/cuda_sha256.h fuguecoin.cpp \
-	Algo256/cuda_fugue256.cu sph/fugue.c uint256.h groestlcoin.cpp \
-	cuda_groestlcoin.cu cuda_groestlcoin.h myriadgroestl.cpp \
-	cuda_myriadgroestl.cu lyra2/Lyra2.c lyra2/Sponge.c \
-	lyra2/lyra2RE.cu lyra2/cuda_lyra2.cu lyra2/lyra2REv2.cu \
-	lyra2/cuda_lyra2v2.cu Algo256/cuda_bmw256.cu \
-	Algo256/cuda_cubehash256.cu Algo256/cuda_blake256.cu \
-	Algo256/cuda_groestl256.cu Algo256/cuda_keccak256.cu \
-	Algo256/cuda_skein256.cu Algo256/blake256.cu Algo256/decred.cu \
-	Algo256/vanilla.cu Algo256/keccak256.cu Algo256/blake2s.cu \
-	sph/blake2s.c Algo256/bmw.cu Algo256/cuda_bmw.cu \
-	JHA/jackpotcoin.cu JHA/cuda_jha_keccak512.cu \
-	JHA/cuda_jha_compactionTest.cu cuda_checkhash.cu \
-	quark/cuda_jh512.cu quark/cuda_quark_blake512.cu \
-	quark/cuda_quark_groestl512.cu quark/cuda_skein512.cu \
-	quark/cuda_bmw512.cu quark/cuda_quark_keccak512.cu \
+	heavy/cuda_sha256.cu heavy/cuda_sha256.h heavy/bastion.cu \
+	heavy/cuda_bastion.cu fuguecoin.cpp Algo256/cuda_fugue256.cu \
+	sph/fugue.c uint256.h groestlcoin.cpp cuda_groestlcoin.cu \
+	cuda_groestlcoin.h myriadgroestl.cpp cuda_myriadgroestl.cu \
+	lyra2/Lyra2.c lyra2/Sponge.c lyra2/lyra2RE.cu \
+	lyra2/cuda_lyra2.cu lyra2/lyra2REv2.cu lyra2/cuda_lyra2v2.cu \
+	lyra2/Lyra2Z.c lyra2/lyra2Z.cu lyra2/cuda_lyra2Z.cu \
+	Algo256/cuda_bmw256.cu Algo256/cuda_cubehash256.cu \
+	Algo256/cuda_blake256.cu Algo256/cuda_groestl256.cu \
+	Algo256/cuda_keccak256.cu Algo256/cuda_skein256.cu \
+	Algo256/blake256.cu Algo256/decred.cu Algo256/vanilla.cu \
+	Algo256/keccak256.cu Algo256/blake2s.cu sph/blake2s.c \
+	Algo256/bmw.cu Algo256/cuda_bmw.cu crypto/xmr-rpc.cpp \
+	crypto/wildkeccak-cpu.cpp crypto/wildkeccak.cu \
+	crypto/cryptolight.cu crypto/cryptolight-core.cu \
+	crypto/cryptolight-cpu.cpp crypto/cryptonight.cu \
+	crypto/cryptonight-core.cu crypto/cryptonight-extra.cu \
+	crypto/cryptonight-cpu.cpp crypto/oaes_lib.cpp crypto/aesb.cpp \
+	crypto/cpu/c_keccak.c JHA/jha.cu JHA/jackpotcoin.cu \
+	JHA/cuda_jha_keccak512.cu JHA/cuda_jha_compactionTest.cu \
+	cuda_checkhash.cu quark/cuda_jh512.cu \
+	quark/cuda_quark_blake512.cu quark/cuda_quark_groestl512.cu \
+	quark/cuda_skein512.cu quark/cuda_bmw512.cu \
+	quark/cuda_quark_keccak512.cu quark/nist5.cu \
 	quark/quarkcoin.cu quark/cuda_quark_compactionTest.cu \
 	neoscrypt/neoscrypt.cpp neoscrypt/neoscrypt-cpu.c \
-	neoscrypt/cuda_neoscrypt.cu cuda_nist5.cu pentablake.cu \
-	skein.cu cuda_skeincoin.cu skein2.cpp zr5.cu sph/bmw.c \
-	sph/blake.c sph/groestl.c sph/jh.c sph/keccak.c sph/skein.c \
-	sph/cubehash.c sph/echo.c sph/luffa.c sph/sha2.c sph/shavite.c \
-	sph/simd.c sph/hamsi.c sph/hamsi_helper.c sph/streebog.c \
-	sph/shabal.c sph/whirlpool.c sph/sha2big.c sph/haval.c \
-	sph/ripemd.c sph/sph_sha2.c lbry/lbry.cu \
-	lbry/cuda_sha256_lbry.cu lbry/cuda_sha512_lbry.cu \
-	qubit/qubit.cu qubit/qubit_luffa512.cu qubit/deep.cu \
-	qubit/luffa.cu x11/x11.cu x11/fresh.cu \
-	x11/cuda_x11_luffa512.cu x11/cuda_x11_cubehash512.cu \
-	x11/cuda_x11_shavite512.cu x11/cuda_x11_simd512.cu \
-	x11/cuda_x11_echo.cu x11/cuda_x11_luffa512_Cubehash.cu \
-	x11/x11evo.cu x13/x13.cu x13/cuda_x13_hamsi512.cu \
-	x13/cuda_x13_fugue512.cu x15/x14.cu x15/x15.cu \
-	x15/cuda_x14_shabal512.cu x15/cuda_x15_whirlpool.cu \
-	x15/whirlpool.cu x17/x17.cu x17/cuda_x17_haval256.cu \
-	x17/cuda_x17_sha512.cu x11/c11.cu x11/s3.cu x11/sib.cu \
+	neoscrypt/cuda_neoscrypt.cu pentablake.cu skein.cu \
+	cuda_skeincoin.cu skein2.cpp zr5.cu skunk/skunk.cu \
+	skunk/cuda_skunk.cu skunk/cuda_skunk_streebog.cu \
+	sha256/sha256d.cu sha256/cuda_sha256d.cu sha256/sha256t.cu \
+	sha256/cuda_sha256t.cu sia/sia.cu sia/sia-rpc.cpp \
+	sph/blake2b.c sph/bmw.c sph/blake.c sph/groestl.c sph/jh.c \
+	sph/keccak.c sph/skein.c sph/cubehash.c sph/echo.c sph/luffa.c \
+	sph/sha2.c sph/shavite.c sph/simd.c sph/hamsi.c \
+	sph/hamsi_helper.c sph/streebog.c sph/shabal.c sph/whirlpool.c \
+	sph/sha2big.c sph/haval.c sph/ripemd.c sph/sph_sha2.c \
+	lbry/lbry.cu lbry/cuda_sha256_lbry.cu lbry/cuda_sha512_lbry.cu \
+	lbry/cuda_lbry_merged.cu qubit/qubit.cu \
+	qubit/qubit_luffa512.cu qubit/deep.cu qubit/luffa.cu \
+	tribus/tribus.cu tribus/cuda_echo512_final.cu x11/x11.cu \
+	x11/fresh.cu x11/cuda_x11_luffa512.cu \
+	x11/cuda_x11_cubehash512.cu x11/cuda_x11_shavite512.cu \
+	x11/cuda_x11_simd512.cu x11/cuda_x11_echo.cu \
+	x11/cuda_x11_luffa512_Cubehash.cu x11/x11evo.cu \
+	x11/timetravel.cu x11/bitcore.cu x13/x13.cu \
+	x13/cuda_x13_hamsi512.cu x13/cuda_x13_fugue512.cu x15/x14.cu \
+	x15/x15.cu x15/cuda_x14_shabal512.cu x15/cuda_x15_whirlpool.cu \
+	x15/whirlpool.cu x15/cuda_x15_whirlpool_sm3.cu x17/x17.cu \
+	x17/hmq17.cu x17/cuda_x17_haval256.cu x17/cuda_x17_sha512.cu \
+	x11/c11.cu x11/s3.cu x11/sib.cu x11/veltor.cu \
 	x11/cuda_streebog.cu scrypt.cpp scrypt-jane.cpp \
 	scrypt/blake.cu scrypt/keccak.cu scrypt/sha256.cu \
 	scrypt/salsa_kernel.cu scrypt/test_kernel.cu \
@@ -158,17 +177,24 @@ am_ccminer_OBJECTS = ccminer-crc32.$(OBJEXT) ccminer-hefty1.$(OBJEXT) \
 	ccminer-bignum.$(OBJEXT) ccminer-api.$(OBJEXT) \
 	ccminer-hashlog.$(OBJEXT) ccminer-nvml.$(OBJEXT) \
 	ccminer-stats.$(OBJEXT) ccminer-sysinfos.$(OBJEXT) \
-	ccminer-cuda.$(OBJEXT) heavy/heavy.$(OBJEXT) \
-	heavy/cuda_blake512.$(OBJEXT) heavy/cuda_combine.$(OBJEXT) \
-	heavy/cuda_groestl512.$(OBJEXT) heavy/cuda_hefty1.$(OBJEXT) \
-	heavy/cuda_keccak512.$(OBJEXT) heavy/cuda_sha256.$(OBJEXT) \
-	ccminer-fuguecoin.$(OBJEXT) Algo256/cuda_fugue256.$(OBJEXT) \
-	sph/ccminer-fugue.$(OBJEXT) ccminer-groestlcoin.$(OBJEXT) \
-	cuda_groestlcoin.$(OBJEXT) ccminer-myriadgroestl.$(OBJEXT) \
-	cuda_myriadgroestl.$(OBJEXT) lyra2/ccminer-Lyra2.$(OBJEXT) \
-	lyra2/ccminer-Sponge.$(OBJEXT) lyra2/lyra2RE.$(OBJEXT) \
-	lyra2/cuda_lyra2.$(OBJEXT) lyra2/lyra2REv2.$(OBJEXT) \
-	lyra2/cuda_lyra2v2.$(OBJEXT) Algo256/cuda_bmw256.$(OBJEXT) \
+	ccminer-cuda.$(OBJEXT) ccminer-nvsettings.$(OBJEXT) \
+	equi/ccminer-equi-stratum.$(OBJEXT) \
+	equi/ccminer-equi.$(OBJEXT) \
+	equi/blake2/ccminer-blake2bx.$(OBJEXT) \
+	equi/ccminer-equihash.$(OBJEXT) equi/cuda_equi.$(OBJEXT) \
+	heavy/heavy.$(OBJEXT) heavy/cuda_blake512.$(OBJEXT) \
+	heavy/cuda_combine.$(OBJEXT) heavy/cuda_groestl512.$(OBJEXT) \
+	heavy/cuda_hefty1.$(OBJEXT) heavy/cuda_keccak512.$(OBJEXT) \
+	heavy/cuda_sha256.$(OBJEXT) heavy/bastion.$(OBJEXT) \
+	heavy/cuda_bastion.$(OBJEXT) ccminer-fuguecoin.$(OBJEXT) \
+	Algo256/cuda_fugue256.$(OBJEXT) sph/ccminer-fugue.$(OBJEXT) \
+	ccminer-groestlcoin.$(OBJEXT) cuda_groestlcoin.$(OBJEXT) \
+	ccminer-myriadgroestl.$(OBJEXT) cuda_myriadgroestl.$(OBJEXT) \
+	lyra2/ccminer-Lyra2.$(OBJEXT) lyra2/ccminer-Sponge.$(OBJEXT) \
+	lyra2/lyra2RE.$(OBJEXT) lyra2/cuda_lyra2.$(OBJEXT) \
+	lyra2/lyra2REv2.$(OBJEXT) lyra2/cuda_lyra2v2.$(OBJEXT) \
+	lyra2/ccminer-Lyra2Z.$(OBJEXT) lyra2/lyra2Z.$(OBJEXT) \
+	lyra2/cuda_lyra2Z.$(OBJEXT) Algo256/cuda_bmw256.$(OBJEXT) \
 	Algo256/cuda_cubehash256.$(OBJEXT) \
 	Algo256/cuda_blake256.$(OBJEXT) \
 	Algo256/cuda_groestl256.$(OBJEXT) \
@@ -177,56 +203,76 @@ am_ccminer_OBJECTS = ccminer-crc32.$(OBJEXT) ccminer-hefty1.$(OBJEXT) \
 	Algo256/decred.$(OBJEXT) Algo256/vanilla.$(OBJEXT) \
 	Algo256/keccak256.$(OBJEXT) Algo256/blake2s.$(OBJEXT) \
 	sph/ccminer-blake2s.$(OBJEXT) Algo256/bmw.$(OBJEXT) \
-	Algo256/cuda_bmw.$(OBJEXT) JHA/jackpotcoin.$(OBJEXT) \
-	JHA/cuda_jha_keccak512.$(OBJEXT) \
+	Algo256/cuda_bmw.$(OBJEXT) crypto/ccminer-xmr-rpc.$(OBJEXT) \
+	crypto/ccminer-wildkeccak-cpu.$(OBJEXT) \
+	crypto/wildkeccak.$(OBJEXT) crypto/cryptolight.$(OBJEXT) \
+	crypto/cryptolight-core.$(OBJEXT) \
+	crypto/ccminer-cryptolight-cpu.$(OBJEXT) \
+	crypto/cryptonight.$(OBJEXT) crypto/cryptonight-core.$(OBJEXT) \
+	crypto/cryptonight-extra.$(OBJEXT) \
+	crypto/ccminer-cryptonight-cpu.$(OBJEXT) \
+	crypto/ccminer-oaes_lib.$(OBJEXT) \
+	crypto/ccminer-aesb.$(OBJEXT) \
+	crypto/cpu/ccminer-c_keccak.$(OBJEXT) JHA/jha.$(OBJEXT) \
+	JHA/jackpotcoin.$(OBJEXT) JHA/cuda_jha_keccak512.$(OBJEXT) \
 	JHA/cuda_jha_compactionTest.$(OBJEXT) cuda_checkhash.$(OBJEXT) \
 	quark/cuda_jh512.$(OBJEXT) quark/cuda_quark_blake512.$(OBJEXT) \
 	quark/cuda_quark_groestl512.$(OBJEXT) \
 	quark/cuda_skein512.$(OBJEXT) quark/cuda_bmw512.$(OBJEXT) \
-	quark/cuda_quark_keccak512.$(OBJEXT) quark/quarkcoin.$(OBJEXT) \
+	quark/cuda_quark_keccak512.$(OBJEXT) quark/nist5.$(OBJEXT) \
+	quark/quarkcoin.$(OBJEXT) \
 	quark/cuda_quark_compactionTest.$(OBJEXT) \
 	neoscrypt/ccminer-neoscrypt.$(OBJEXT) \
 	neoscrypt/ccminer-neoscrypt-cpu.$(OBJEXT) \
-	neoscrypt/cuda_neoscrypt.$(OBJEXT) cuda_nist5.$(OBJEXT) \
-	pentablake.$(OBJEXT) skein.$(OBJEXT) cuda_skeincoin.$(OBJEXT) \
-	ccminer-skein2.$(OBJEXT) zr5.$(OBJEXT) \
-	sph/ccminer-bmw.$(OBJEXT) sph/ccminer-blake.$(OBJEXT) \
-	sph/ccminer-groestl.$(OBJEXT) sph/ccminer-jh.$(OBJEXT) \
-	sph/ccminer-keccak.$(OBJEXT) sph/ccminer-skein.$(OBJEXT) \
-	sph/ccminer-cubehash.$(OBJEXT) sph/ccminer-echo.$(OBJEXT) \
-	sph/ccminer-luffa.$(OBJEXT) sph/ccminer-sha2.$(OBJEXT) \
-	sph/ccminer-shavite.$(OBJEXT) sph/ccminer-simd.$(OBJEXT) \
-	sph/ccminer-hamsi.$(OBJEXT) sph/ccminer-hamsi_helper.$(OBJEXT) \
+	neoscrypt/cuda_neoscrypt.$(OBJEXT) pentablake.$(OBJEXT) \
+	skein.$(OBJEXT) cuda_skeincoin.$(OBJEXT) \
+	ccminer-skein2.$(OBJEXT) zr5.$(OBJEXT) skunk/skunk.$(OBJEXT) \
+	skunk/cuda_skunk.$(OBJEXT) skunk/cuda_skunk_streebog.$(OBJEXT) \
+	sha256/sha256d.$(OBJEXT) sha256/cuda_sha256d.$(OBJEXT) \
+	sha256/sha256t.$(OBJEXT) sha256/cuda_sha256t.$(OBJEXT) \
+	sia/sia.$(OBJEXT) sia/ccminer-sia-rpc.$(OBJEXT) \
+	sph/ccminer-blake2b.$(OBJEXT) sph/ccminer-bmw.$(OBJEXT) \
+	sph/ccminer-blake.$(OBJEXT) sph/ccminer-groestl.$(OBJEXT) \
+	sph/ccminer-jh.$(OBJEXT) sph/ccminer-keccak.$(OBJEXT) \
+	sph/ccminer-skein.$(OBJEXT) sph/ccminer-cubehash.$(OBJEXT) \
+	sph/ccminer-echo.$(OBJEXT) sph/ccminer-luffa.$(OBJEXT) \
+	sph/ccminer-sha2.$(OBJEXT) sph/ccminer-shavite.$(OBJEXT) \
+	sph/ccminer-simd.$(OBJEXT) sph/ccminer-hamsi.$(OBJEXT) \
+	sph/ccminer-hamsi_helper.$(OBJEXT) \
 	sph/ccminer-streebog.$(OBJEXT) sph/ccminer-shabal.$(OBJEXT) \
 	sph/ccminer-whirlpool.$(OBJEXT) sph/ccminer-sha2big.$(OBJEXT) \
 	sph/ccminer-haval.$(OBJEXT) sph/ccminer-ripemd.$(OBJEXT) \
 	sph/ccminer-sph_sha2.$(OBJEXT) lbry/lbry.$(OBJEXT) \
 	lbry/cuda_sha256_lbry.$(OBJEXT) \
-	lbry/cuda_sha512_lbry.$(OBJEXT) qubit/qubit.$(OBJEXT) \
+	lbry/cuda_sha512_lbry.$(OBJEXT) \
+	lbry/cuda_lbry_merged.$(OBJEXT) qubit/qubit.$(OBJEXT) \
 	qubit/qubit_luffa512.$(OBJEXT) qubit/deep.$(OBJEXT) \
-	qubit/luffa.$(OBJEXT) x11/x11.$(OBJEXT) x11/fresh.$(OBJEXT) \
-	x11/cuda_x11_luffa512.$(OBJEXT) \
+	qubit/luffa.$(OBJEXT) tribus/tribus.$(OBJEXT) \
+	tribus/cuda_echo512_final.$(OBJEXT) x11/x11.$(OBJEXT) \
+	x11/fresh.$(OBJEXT) x11/cuda_x11_luffa512.$(OBJEXT) \
 	x11/cuda_x11_cubehash512.$(OBJEXT) \
 	x11/cuda_x11_shavite512.$(OBJEXT) \
 	x11/cuda_x11_simd512.$(OBJEXT) x11/cuda_x11_echo.$(OBJEXT) \
 	x11/cuda_x11_luffa512_Cubehash.$(OBJEXT) x11/x11evo.$(OBJEXT) \
+	x11/timetravel.$(OBJEXT) x11/bitcore.$(OBJEXT) \
 	x13/x13.$(OBJEXT) x13/cuda_x13_hamsi512.$(OBJEXT) \
 	x13/cuda_x13_fugue512.$(OBJEXT) x15/x14.$(OBJEXT) \
 	x15/x15.$(OBJEXT) x15/cuda_x14_shabal512.$(OBJEXT) \
 	x15/cuda_x15_whirlpool.$(OBJEXT) x15/whirlpool.$(OBJEXT) \
-	x17/x17.$(OBJEXT) x17/cuda_x17_haval256.$(OBJEXT) \
+	x15/cuda_x15_whirlpool_sm3.$(OBJEXT) x17/x17.$(OBJEXT) \
+	x17/hmq17.$(OBJEXT) x17/cuda_x17_haval256.$(OBJEXT) \
 	x17/cuda_x17_sha512.$(OBJEXT) x11/c11.$(OBJEXT) \
-	x11/s3.$(OBJEXT) x11/sib.$(OBJEXT) x11/cuda_streebog.$(OBJEXT) \
-	ccminer-scrypt.$(OBJEXT) ccminer-scrypt-jane.$(OBJEXT) \
-	scrypt/blake.$(OBJEXT) scrypt/keccak.$(OBJEXT) \
-	scrypt/sha256.$(OBJEXT) scrypt/salsa_kernel.$(OBJEXT) \
-	scrypt/test_kernel.$(OBJEXT) scrypt/fermi_kernel.$(OBJEXT) \
-	scrypt/kepler_kernel.$(OBJEXT) scrypt/nv_kernel.$(OBJEXT) \
-	scrypt/nv_kernel2.$(OBJEXT) scrypt/titan_kernel.$(OBJEXT) \
-	$(am__objects_1)
+	x11/s3.$(OBJEXT) x11/sib.$(OBJEXT) x11/veltor.$(OBJEXT) \
+	x11/cuda_streebog.$(OBJEXT) ccminer-scrypt.$(OBJEXT) \
+	ccminer-scrypt-jane.$(OBJEXT) scrypt/blake.$(OBJEXT) \
+	scrypt/keccak.$(OBJEXT) scrypt/sha256.$(OBJEXT) \
+	scrypt/salsa_kernel.$(OBJEXT) scrypt/test_kernel.$(OBJEXT) \
+	scrypt/fermi_kernel.$(OBJEXT) scrypt/kepler_kernel.$(OBJEXT) \
+	scrypt/nv_kernel.$(OBJEXT) scrypt/nv_kernel2.$(OBJEXT) \
+	scrypt/titan_kernel.$(OBJEXT) $(am__objects_1)
 ccminer_OBJECTS = $(am_ccminer_OBJECTS)
 am__DEPENDENCIES_1 =
-ccminer_DEPENDENCIES = $(am__DEPENDENCIES_1)
+ccminer_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 ccminer_LINK = $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) $(ccminer_LDFLAGS) \
 	$(LDFLAGS) -o $@
 AM_V_P = $(am__v_P_@AM_V@)
@@ -500,48 +546,64 @@ ccminer_SOURCES = elist.h miner.h compat.h compat/inttypes.h \
 	compat/stdbool.h compat/unistd.h compat/sys/time.h \
 	compat/getopt/getopt.h crc32.c hefty1.c ccminer.cpp pools.cpp \
 	util.cpp bench.cpp bignum.cpp api.cpp hashlog.cpp nvml.cpp \
-	stats.cpp sysinfos.cpp cuda.cpp heavy/heavy.cu \
+	stats.cpp sysinfos.cpp cuda.cpp nvsettings.cpp \
+	equi/equi-stratum.cpp equi/equi.cpp equi/blake2/blake2bx.cpp \
+	equi/equihash.cpp equi/cuda_equi.cu heavy/heavy.cu \
 	heavy/cuda_blake512.cu heavy/cuda_blake512.h \
 	heavy/cuda_combine.cu heavy/cuda_combine.h \
 	heavy/cuda_groestl512.cu heavy/cuda_groestl512.h \
 	heavy/cuda_hefty1.cu heavy/cuda_hefty1.h \
 	heavy/cuda_keccak512.cu heavy/cuda_keccak512.h \
-	heavy/cuda_sha256.cu heavy/cuda_sha256.h fuguecoin.cpp \
-	Algo256/cuda_fugue256.cu sph/fugue.c uint256.h groestlcoin.cpp \
-	cuda_groestlcoin.cu cuda_groestlcoin.h myriadgroestl.cpp \
-	cuda_myriadgroestl.cu lyra2/Lyra2.c lyra2/Sponge.c \
-	lyra2/lyra2RE.cu lyra2/cuda_lyra2.cu lyra2/lyra2REv2.cu \
-	lyra2/cuda_lyra2v2.cu Algo256/cuda_bmw256.cu \
-	Algo256/cuda_cubehash256.cu Algo256/cuda_blake256.cu \
-	Algo256/cuda_groestl256.cu Algo256/cuda_keccak256.cu \
-	Algo256/cuda_skein256.cu Algo256/blake256.cu Algo256/decred.cu \
-	Algo256/vanilla.cu Algo256/keccak256.cu Algo256/blake2s.cu \
-	sph/blake2s.c Algo256/bmw.cu Algo256/cuda_bmw.cu \
-	JHA/jackpotcoin.cu JHA/cuda_jha_keccak512.cu \
-	JHA/cuda_jha_compactionTest.cu cuda_checkhash.cu \
-	quark/cuda_jh512.cu quark/cuda_quark_blake512.cu \
-	quark/cuda_quark_groestl512.cu quark/cuda_skein512.cu \
-	quark/cuda_bmw512.cu quark/cuda_quark_keccak512.cu \
+	heavy/cuda_sha256.cu heavy/cuda_sha256.h heavy/bastion.cu \
+	heavy/cuda_bastion.cu fuguecoin.cpp Algo256/cuda_fugue256.cu \
+	sph/fugue.c uint256.h groestlcoin.cpp cuda_groestlcoin.cu \
+	cuda_groestlcoin.h myriadgroestl.cpp cuda_myriadgroestl.cu \
+	lyra2/Lyra2.c lyra2/Sponge.c lyra2/lyra2RE.cu \
+	lyra2/cuda_lyra2.cu lyra2/lyra2REv2.cu lyra2/cuda_lyra2v2.cu \
+	lyra2/Lyra2Z.c lyra2/lyra2Z.cu lyra2/cuda_lyra2Z.cu \
+	Algo256/cuda_bmw256.cu Algo256/cuda_cubehash256.cu \
+	Algo256/cuda_blake256.cu Algo256/cuda_groestl256.cu \
+	Algo256/cuda_keccak256.cu Algo256/cuda_skein256.cu \
+	Algo256/blake256.cu Algo256/decred.cu Algo256/vanilla.cu \
+	Algo256/keccak256.cu Algo256/blake2s.cu sph/blake2s.c \
+	Algo256/bmw.cu Algo256/cuda_bmw.cu crypto/xmr-rpc.cpp \
+	crypto/wildkeccak-cpu.cpp crypto/wildkeccak.cu \
+	crypto/cryptolight.cu crypto/cryptolight-core.cu \
+	crypto/cryptolight-cpu.cpp crypto/cryptonight.cu \
+	crypto/cryptonight-core.cu crypto/cryptonight-extra.cu \
+	crypto/cryptonight-cpu.cpp crypto/oaes_lib.cpp crypto/aesb.cpp \
+	crypto/cpu/c_keccak.c JHA/jha.cu JHA/jackpotcoin.cu \
+	JHA/cuda_jha_keccak512.cu JHA/cuda_jha_compactionTest.cu \
+	cuda_checkhash.cu quark/cuda_jh512.cu \
+	quark/cuda_quark_blake512.cu quark/cuda_quark_groestl512.cu \
+	quark/cuda_skein512.cu quark/cuda_bmw512.cu \
+	quark/cuda_quark_keccak512.cu quark/nist5.cu \
 	quark/quarkcoin.cu quark/cuda_quark_compactionTest.cu \
 	neoscrypt/neoscrypt.cpp neoscrypt/neoscrypt-cpu.c \
-	neoscrypt/cuda_neoscrypt.cu cuda_nist5.cu pentablake.cu \
-	skein.cu cuda_skeincoin.cu skein2.cpp zr5.cu sph/bmw.c \
-	sph/blake.c sph/groestl.c sph/jh.c sph/keccak.c sph/skein.c \
-	sph/cubehash.c sph/echo.c sph/luffa.c sph/sha2.c sph/shavite.c \
-	sph/simd.c sph/hamsi.c sph/hamsi_helper.c sph/streebog.c \
-	sph/shabal.c sph/whirlpool.c sph/sha2big.c sph/haval.c \
-	sph/ripemd.c sph/sph_sha2.c lbry/lbry.cu \
-	lbry/cuda_sha256_lbry.cu lbry/cuda_sha512_lbry.cu \
-	qubit/qubit.cu qubit/qubit_luffa512.cu qubit/deep.cu \
-	qubit/luffa.cu x11/x11.cu x11/fresh.cu \
-	x11/cuda_x11_luffa512.cu x11/cuda_x11_cubehash512.cu \
-	x11/cuda_x11_shavite512.cu x11/cuda_x11_simd512.cu \
-	x11/cuda_x11_echo.cu x11/cuda_x11_luffa512_Cubehash.cu \
-	x11/x11evo.cu x13/x13.cu x13/cuda_x13_hamsi512.cu \
-	x13/cuda_x13_fugue512.cu x15/x14.cu x15/x15.cu \
-	x15/cuda_x14_shabal512.cu x15/cuda_x15_whirlpool.cu \
-	x15/whirlpool.cu x17/x17.cu x17/cuda_x17_haval256.cu \
-	x17/cuda_x17_sha512.cu x11/c11.cu x11/s3.cu x11/sib.cu \
+	neoscrypt/cuda_neoscrypt.cu pentablake.cu skein.cu \
+	cuda_skeincoin.cu skein2.cpp zr5.cu skunk/skunk.cu \
+	skunk/cuda_skunk.cu skunk/cuda_skunk_streebog.cu \
+	sha256/sha256d.cu sha256/cuda_sha256d.cu sha256/sha256t.cu \
+	sha256/cuda_sha256t.cu sia/sia.cu sia/sia-rpc.cpp \
+	sph/blake2b.c sph/bmw.c sph/blake.c sph/groestl.c sph/jh.c \
+	sph/keccak.c sph/skein.c sph/cubehash.c sph/echo.c sph/luffa.c \
+	sph/sha2.c sph/shavite.c sph/simd.c sph/hamsi.c \
+	sph/hamsi_helper.c sph/streebog.c sph/shabal.c sph/whirlpool.c \
+	sph/sha2big.c sph/haval.c sph/ripemd.c sph/sph_sha2.c \
+	lbry/lbry.cu lbry/cuda_sha256_lbry.cu lbry/cuda_sha512_lbry.cu \
+	lbry/cuda_lbry_merged.cu qubit/qubit.cu \
+	qubit/qubit_luffa512.cu qubit/deep.cu qubit/luffa.cu \
+	tribus/tribus.cu tribus/cuda_echo512_final.cu x11/x11.cu \
+	x11/fresh.cu x11/cuda_x11_luffa512.cu \
+	x11/cuda_x11_cubehash512.cu x11/cuda_x11_shavite512.cu \
+	x11/cuda_x11_simd512.cu x11/cuda_x11_echo.cu \
+	x11/cuda_x11_luffa512_Cubehash.cu x11/x11evo.cu \
+	x11/timetravel.cu x11/bitcore.cu x13/x13.cu \
+	x13/cuda_x13_hamsi512.cu x13/cuda_x13_fugue512.cu x15/x14.cu \
+	x15/x15.cu x15/cuda_x14_shabal512.cu x15/cuda_x15_whirlpool.cu \
+	x15/whirlpool.cu x15/cuda_x15_whirlpool_sm3.cu x17/x17.cu \
+	x17/hmq17.cu x17/cuda_x17_haval256.cu x17/cuda_x17_sha512.cu \
+	x11/c11.cu x11/s3.cu x11/sib.cu x11/veltor.cu \
 	x11/cuda_streebog.cu scrypt.cpp scrypt-jane.cpp \
 	scrypt/blake.cu scrypt/keccak.cu scrypt/sha256.cu \
 	scrypt/salsa_kernel.cu scrypt/test_kernel.cu \
@@ -550,11 +612,17 @@ ccminer_SOURCES = elist.h miner.h compat.h compat/inttypes.h \
 	scrypt/titan_kernel.cu $(am__append_1)
 @HAVE_NVML_TRUE@nvml_defs = -DUSE_WRAPNVML
 @HAVE_NVML_TRUE@nvml_libs = -ldl
-ccminer_LDFLAGS = $(PTHREAD_FLAGS) @CUDA_LDFLAGS@
-ccminer_LDADD = @LIBCURL@ @JANSSON_LIBS@ @PTHREAD_LIBS@ @WS2_LIBS@ @CUDA_LIBS@ @OPENMP_CFLAGS@ @LIBS@ $(nvml_libs)
-ccminer_CPPFLAGS = @LIBCURL_CPPFLAGS@ @OPENMP_CFLAGS@ $(CPPFLAGS) $(PTHREAD_FLAGS) -fno-strict-aliasing $(JANSSON_INCLUDES) $(DEF_INCLUDES) $(nvml_defs)
+ccminer_LDFLAGS = $(PTHREAD_FLAGS) @CUDA_LDFLAGS@ $(am__append_3)
 
-#nvcc_ARCH += -gencode=arch=compute_61,code=\"sm_61,compute_61\"
+#ccminer_CPPFLAGS += -DUSE_LIBSODIUM
+#ccminer_LDFLAGS += -Lequi/lib
+#ccminer_LDADD += -lsodium
+ccminer_LDADD = @LIBCURL@ @JANSSON_LIBS@ @PTHREAD_LIBS@ @WS2_LIBS@ \
+	@CUDA_LIBS@ @OPENMP_CFLAGS@ @LIBS@ $(nvml_libs) \
+	$(am__append_4) -lcuda
+ccminer_CPPFLAGS = @LIBCURL_CPPFLAGS@ @OPENMP_CFLAGS@ $(CPPFLAGS) \
+	$(PTHREAD_FLAGS) -fno-strict-aliasing $(JANSSON_INCLUDES) \
+	$(DEF_INCLUDES) $(nvml_defs) $(am__append_2)
 nvcc_ARCH = -gencode=arch=compute_50,code=\"sm_50,compute_50\" \
 	-gencode=arch=compute_52,code=\"sm_52,compute_52\"
 #nvcc_ARCH += -gencode=arch=compute_35,code=\"sm_35,compute_35\"
@@ -658,6 +726,28 @@ uninstall-binPROGRAMS:
 
 clean-binPROGRAMS:
 	-test -z "$(bin_PROGRAMS)" || rm -f $(bin_PROGRAMS)
+equi/$(am__dirstamp):
+	@$(MKDIR_P) equi
+	@: > equi/$(am__dirstamp)
+equi/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) equi/$(DEPDIR)
+	@: > equi/$(DEPDIR)/$(am__dirstamp)
+equi/ccminer-equi-stratum.$(OBJEXT): equi/$(am__dirstamp) \
+	equi/$(DEPDIR)/$(am__dirstamp)
+equi/ccminer-equi.$(OBJEXT): equi/$(am__dirstamp) \
+	equi/$(DEPDIR)/$(am__dirstamp)
+equi/blake2/$(am__dirstamp):
+	@$(MKDIR_P) equi/blake2
+	@: > equi/blake2/$(am__dirstamp)
+equi/blake2/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) equi/blake2/$(DEPDIR)
+	@: > equi/blake2/$(DEPDIR)/$(am__dirstamp)
+equi/blake2/ccminer-blake2bx.$(OBJEXT): equi/blake2/$(am__dirstamp) \
+	equi/blake2/$(DEPDIR)/$(am__dirstamp)
+equi/ccminer-equihash.$(OBJEXT): equi/$(am__dirstamp) \
+	equi/$(DEPDIR)/$(am__dirstamp)
+equi/cuda_equi.$(OBJEXT): equi/$(am__dirstamp) \
+	equi/$(DEPDIR)/$(am__dirstamp)
 heavy/$(am__dirstamp):
 	@$(MKDIR_P) heavy
 	@: > heavy/$(am__dirstamp)
@@ -677,6 +767,10 @@ heavy/cuda_hefty1.$(OBJEXT): heavy/$(am__dirstamp) \
 heavy/cuda_keccak512.$(OBJEXT): heavy/$(am__dirstamp) \
 	heavy/$(DEPDIR)/$(am__dirstamp)
 heavy/cuda_sha256.$(OBJEXT): heavy/$(am__dirstamp) \
+	heavy/$(DEPDIR)/$(am__dirstamp)
+heavy/bastion.$(OBJEXT): heavy/$(am__dirstamp) \
+	heavy/$(DEPDIR)/$(am__dirstamp)
+heavy/cuda_bastion.$(OBJEXT): heavy/$(am__dirstamp) \
 	heavy/$(DEPDIR)/$(am__dirstamp)
 Algo256/$(am__dirstamp):
 	@$(MKDIR_P) Algo256
@@ -712,6 +806,12 @@ lyra2/lyra2REv2.$(OBJEXT): lyra2/$(am__dirstamp) \
 	lyra2/$(DEPDIR)/$(am__dirstamp)
 lyra2/cuda_lyra2v2.$(OBJEXT): lyra2/$(am__dirstamp) \
 	lyra2/$(DEPDIR)/$(am__dirstamp)
+lyra2/ccminer-Lyra2Z.$(OBJEXT): lyra2/$(am__dirstamp) \
+	lyra2/$(DEPDIR)/$(am__dirstamp)
+lyra2/lyra2Z.$(OBJEXT): lyra2/$(am__dirstamp) \
+	lyra2/$(DEPDIR)/$(am__dirstamp)
+lyra2/cuda_lyra2Z.$(OBJEXT): lyra2/$(am__dirstamp) \
+	lyra2/$(DEPDIR)/$(am__dirstamp)
 Algo256/cuda_bmw256.$(OBJEXT): Algo256/$(am__dirstamp) \
 	Algo256/$(DEPDIR)/$(am__dirstamp)
 Algo256/cuda_cubehash256.$(OBJEXT): Algo256/$(am__dirstamp) \
@@ -740,12 +840,51 @@ Algo256/bmw.$(OBJEXT): Algo256/$(am__dirstamp) \
 	Algo256/$(DEPDIR)/$(am__dirstamp)
 Algo256/cuda_bmw.$(OBJEXT): Algo256/$(am__dirstamp) \
 	Algo256/$(DEPDIR)/$(am__dirstamp)
+crypto/$(am__dirstamp):
+	@$(MKDIR_P) crypto
+	@: > crypto/$(am__dirstamp)
+crypto/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) crypto/$(DEPDIR)
+	@: > crypto/$(DEPDIR)/$(am__dirstamp)
+crypto/ccminer-xmr-rpc.$(OBJEXT): crypto/$(am__dirstamp) \
+	crypto/$(DEPDIR)/$(am__dirstamp)
+crypto/ccminer-wildkeccak-cpu.$(OBJEXT): crypto/$(am__dirstamp) \
+	crypto/$(DEPDIR)/$(am__dirstamp)
+crypto/wildkeccak.$(OBJEXT): crypto/$(am__dirstamp) \
+	crypto/$(DEPDIR)/$(am__dirstamp)
+crypto/cryptolight.$(OBJEXT): crypto/$(am__dirstamp) \
+	crypto/$(DEPDIR)/$(am__dirstamp)
+crypto/cryptolight-core.$(OBJEXT): crypto/$(am__dirstamp) \
+	crypto/$(DEPDIR)/$(am__dirstamp)
+crypto/ccminer-cryptolight-cpu.$(OBJEXT): crypto/$(am__dirstamp) \
+	crypto/$(DEPDIR)/$(am__dirstamp)
+crypto/cryptonight.$(OBJEXT): crypto/$(am__dirstamp) \
+	crypto/$(DEPDIR)/$(am__dirstamp)
+crypto/cryptonight-core.$(OBJEXT): crypto/$(am__dirstamp) \
+	crypto/$(DEPDIR)/$(am__dirstamp)
+crypto/cryptonight-extra.$(OBJEXT): crypto/$(am__dirstamp) \
+	crypto/$(DEPDIR)/$(am__dirstamp)
+crypto/ccminer-cryptonight-cpu.$(OBJEXT): crypto/$(am__dirstamp) \
+	crypto/$(DEPDIR)/$(am__dirstamp)
+crypto/ccminer-oaes_lib.$(OBJEXT): crypto/$(am__dirstamp) \
+	crypto/$(DEPDIR)/$(am__dirstamp)
+crypto/ccminer-aesb.$(OBJEXT): crypto/$(am__dirstamp) \
+	crypto/$(DEPDIR)/$(am__dirstamp)
+crypto/cpu/$(am__dirstamp):
+	@$(MKDIR_P) crypto/cpu
+	@: > crypto/cpu/$(am__dirstamp)
+crypto/cpu/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) crypto/cpu/$(DEPDIR)
+	@: > crypto/cpu/$(DEPDIR)/$(am__dirstamp)
+crypto/cpu/ccminer-c_keccak.$(OBJEXT): crypto/cpu/$(am__dirstamp) \
+	crypto/cpu/$(DEPDIR)/$(am__dirstamp)
 JHA/$(am__dirstamp):
 	@$(MKDIR_P) JHA
 	@: > JHA/$(am__dirstamp)
 JHA/$(DEPDIR)/$(am__dirstamp):
 	@$(MKDIR_P) JHA/$(DEPDIR)
 	@: > JHA/$(DEPDIR)/$(am__dirstamp)
+JHA/jha.$(OBJEXT): JHA/$(am__dirstamp) JHA/$(DEPDIR)/$(am__dirstamp)
 JHA/jackpotcoin.$(OBJEXT): JHA/$(am__dirstamp) \
 	JHA/$(DEPDIR)/$(am__dirstamp)
 JHA/cuda_jha_keccak512.$(OBJEXT): JHA/$(am__dirstamp) \
@@ -770,6 +909,8 @@ quark/cuda_bmw512.$(OBJEXT): quark/$(am__dirstamp) \
 	quark/$(DEPDIR)/$(am__dirstamp)
 quark/cuda_quark_keccak512.$(OBJEXT): quark/$(am__dirstamp) \
 	quark/$(DEPDIR)/$(am__dirstamp)
+quark/nist5.$(OBJEXT): quark/$(am__dirstamp) \
+	quark/$(DEPDIR)/$(am__dirstamp)
 quark/quarkcoin.$(OBJEXT): quark/$(am__dirstamp) \
 	quark/$(DEPDIR)/$(am__dirstamp)
 quark/cuda_quark_compactionTest.$(OBJEXT): quark/$(am__dirstamp) \
@@ -786,6 +927,43 @@ neoscrypt/ccminer-neoscrypt-cpu.$(OBJEXT): neoscrypt/$(am__dirstamp) \
 	neoscrypt/$(DEPDIR)/$(am__dirstamp)
 neoscrypt/cuda_neoscrypt.$(OBJEXT): neoscrypt/$(am__dirstamp) \
 	neoscrypt/$(DEPDIR)/$(am__dirstamp)
+skunk/$(am__dirstamp):
+	@$(MKDIR_P) skunk
+	@: > skunk/$(am__dirstamp)
+skunk/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) skunk/$(DEPDIR)
+	@: > skunk/$(DEPDIR)/$(am__dirstamp)
+skunk/skunk.$(OBJEXT): skunk/$(am__dirstamp) \
+	skunk/$(DEPDIR)/$(am__dirstamp)
+skunk/cuda_skunk.$(OBJEXT): skunk/$(am__dirstamp) \
+	skunk/$(DEPDIR)/$(am__dirstamp)
+skunk/cuda_skunk_streebog.$(OBJEXT): skunk/$(am__dirstamp) \
+	skunk/$(DEPDIR)/$(am__dirstamp)
+sha256/$(am__dirstamp):
+	@$(MKDIR_P) sha256
+	@: > sha256/$(am__dirstamp)
+sha256/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) sha256/$(DEPDIR)
+	@: > sha256/$(DEPDIR)/$(am__dirstamp)
+sha256/sha256d.$(OBJEXT): sha256/$(am__dirstamp) \
+	sha256/$(DEPDIR)/$(am__dirstamp)
+sha256/cuda_sha256d.$(OBJEXT): sha256/$(am__dirstamp) \
+	sha256/$(DEPDIR)/$(am__dirstamp)
+sha256/sha256t.$(OBJEXT): sha256/$(am__dirstamp) \
+	sha256/$(DEPDIR)/$(am__dirstamp)
+sha256/cuda_sha256t.$(OBJEXT): sha256/$(am__dirstamp) \
+	sha256/$(DEPDIR)/$(am__dirstamp)
+sia/$(am__dirstamp):
+	@$(MKDIR_P) sia
+	@: > sia/$(am__dirstamp)
+sia/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) sia/$(DEPDIR)
+	@: > sia/$(DEPDIR)/$(am__dirstamp)
+sia/sia.$(OBJEXT): sia/$(am__dirstamp) sia/$(DEPDIR)/$(am__dirstamp)
+sia/ccminer-sia-rpc.$(OBJEXT): sia/$(am__dirstamp) \
+	sia/$(DEPDIR)/$(am__dirstamp)
+sph/ccminer-blake2b.$(OBJEXT): sph/$(am__dirstamp) \
+	sph/$(DEPDIR)/$(am__dirstamp)
 sph/ccminer-bmw.$(OBJEXT): sph/$(am__dirstamp) \
 	sph/$(DEPDIR)/$(am__dirstamp)
 sph/ccminer-blake.$(OBJEXT): sph/$(am__dirstamp) \
@@ -840,6 +1018,8 @@ lbry/cuda_sha256_lbry.$(OBJEXT): lbry/$(am__dirstamp) \
 	lbry/$(DEPDIR)/$(am__dirstamp)
 lbry/cuda_sha512_lbry.$(OBJEXT): lbry/$(am__dirstamp) \
 	lbry/$(DEPDIR)/$(am__dirstamp)
+lbry/cuda_lbry_merged.$(OBJEXT): lbry/$(am__dirstamp) \
+	lbry/$(DEPDIR)/$(am__dirstamp)
 qubit/$(am__dirstamp):
 	@$(MKDIR_P) qubit
 	@: > qubit/$(am__dirstamp)
@@ -854,6 +1034,16 @@ qubit/deep.$(OBJEXT): qubit/$(am__dirstamp) \
 	qubit/$(DEPDIR)/$(am__dirstamp)
 qubit/luffa.$(OBJEXT): qubit/$(am__dirstamp) \
 	qubit/$(DEPDIR)/$(am__dirstamp)
+tribus/$(am__dirstamp):
+	@$(MKDIR_P) tribus
+	@: > tribus/$(am__dirstamp)
+tribus/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) tribus/$(DEPDIR)
+	@: > tribus/$(DEPDIR)/$(am__dirstamp)
+tribus/tribus.$(OBJEXT): tribus/$(am__dirstamp) \
+	tribus/$(DEPDIR)/$(am__dirstamp)
+tribus/cuda_echo512_final.$(OBJEXT): tribus/$(am__dirstamp) \
+	tribus/$(DEPDIR)/$(am__dirstamp)
 x11/$(am__dirstamp):
 	@$(MKDIR_P) x11
 	@: > x11/$(am__dirstamp)
@@ -875,6 +1065,10 @@ x11/cuda_x11_echo.$(OBJEXT): x11/$(am__dirstamp) \
 x11/cuda_x11_luffa512_Cubehash.$(OBJEXT): x11/$(am__dirstamp) \
 	x11/$(DEPDIR)/$(am__dirstamp)
 x11/x11evo.$(OBJEXT): x11/$(am__dirstamp) \
+	x11/$(DEPDIR)/$(am__dirstamp)
+x11/timetravel.$(OBJEXT): x11/$(am__dirstamp) \
+	x11/$(DEPDIR)/$(am__dirstamp)
+x11/bitcore.$(OBJEXT): x11/$(am__dirstamp) \
 	x11/$(DEPDIR)/$(am__dirstamp)
 x13/$(am__dirstamp):
 	@$(MKDIR_P) x13
@@ -901,6 +1095,8 @@ x15/cuda_x15_whirlpool.$(OBJEXT): x15/$(am__dirstamp) \
 	x15/$(DEPDIR)/$(am__dirstamp)
 x15/whirlpool.$(OBJEXT): x15/$(am__dirstamp) \
 	x15/$(DEPDIR)/$(am__dirstamp)
+x15/cuda_x15_whirlpool_sm3.$(OBJEXT): x15/$(am__dirstamp) \
+	x15/$(DEPDIR)/$(am__dirstamp)
 x17/$(am__dirstamp):
 	@$(MKDIR_P) x17
 	@: > x17/$(am__dirstamp)
@@ -908,6 +1104,7 @@ x17/$(DEPDIR)/$(am__dirstamp):
 	@$(MKDIR_P) x17/$(DEPDIR)
 	@: > x17/$(DEPDIR)/$(am__dirstamp)
 x17/x17.$(OBJEXT): x17/$(am__dirstamp) x17/$(DEPDIR)/$(am__dirstamp)
+x17/hmq17.$(OBJEXT): x17/$(am__dirstamp) x17/$(DEPDIR)/$(am__dirstamp)
 x17/cuda_x17_haval256.$(OBJEXT): x17/$(am__dirstamp) \
 	x17/$(DEPDIR)/$(am__dirstamp)
 x17/cuda_x17_sha512.$(OBJEXT): x17/$(am__dirstamp) \
@@ -915,6 +1112,8 @@ x17/cuda_x17_sha512.$(OBJEXT): x17/$(am__dirstamp) \
 x11/c11.$(OBJEXT): x11/$(am__dirstamp) x11/$(DEPDIR)/$(am__dirstamp)
 x11/s3.$(OBJEXT): x11/$(am__dirstamp) x11/$(DEPDIR)/$(am__dirstamp)
 x11/sib.$(OBJEXT): x11/$(am__dirstamp) x11/$(DEPDIR)/$(am__dirstamp)
+x11/veltor.$(OBJEXT): x11/$(am__dirstamp) \
+	x11/$(DEPDIR)/$(am__dirstamp)
 x11/cuda_streebog.$(OBJEXT): x11/$(am__dirstamp) \
 	x11/$(DEPDIR)/$(am__dirstamp)
 scrypt/$(am__dirstamp):
@@ -961,6 +1160,10 @@ mostlyclean-compile:
 	-rm -f Algo256/*.$(OBJEXT)
 	-rm -f JHA/*.$(OBJEXT)
 	-rm -f compat/*.$(OBJEXT)
+	-rm -f crypto/*.$(OBJEXT)
+	-rm -f crypto/cpu/*.$(OBJEXT)
+	-rm -f equi/*.$(OBJEXT)
+	-rm -f equi/blake2/*.$(OBJEXT)
 	-rm -f heavy/*.$(OBJEXT)
 	-rm -f lbry/*.$(OBJEXT)
 	-rm -f lyra2/*.$(OBJEXT)
@@ -968,7 +1171,11 @@ mostlyclean-compile:
 	-rm -f quark/*.$(OBJEXT)
 	-rm -f qubit/*.$(OBJEXT)
 	-rm -f scrypt/*.$(OBJEXT)
+	-rm -f sha256/*.$(OBJEXT)
+	-rm -f sia/*.$(OBJEXT)
+	-rm -f skunk/*.$(OBJEXT)
 	-rm -f sph/*.$(OBJEXT)
+	-rm -f tribus/*.$(OBJEXT)
 	-rm -f x11/*.$(OBJEXT)
 	-rm -f x13/*.$(OBJEXT)
 	-rm -f x15/*.$(OBJEXT)
@@ -989,6 +1196,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ccminer-hefty1.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ccminer-myriadgroestl.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ccminer-nvml.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ccminer-nvsettings.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ccminer-pools.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ccminer-scrypt-jane.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ccminer-scrypt.Po@am__quote@
@@ -997,11 +1205,25 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ccminer-sysinfos.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ccminer-util.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@compat/$(DEPDIR)/ccminer-winansi.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@crypto/$(DEPDIR)/ccminer-aesb.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@crypto/$(DEPDIR)/ccminer-cryptolight-cpu.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@crypto/$(DEPDIR)/ccminer-cryptonight-cpu.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@crypto/$(DEPDIR)/ccminer-oaes_lib.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@crypto/$(DEPDIR)/ccminer-wildkeccak-cpu.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@crypto/$(DEPDIR)/ccminer-xmr-rpc.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@crypto/cpu/$(DEPDIR)/ccminer-c_keccak.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@equi/$(DEPDIR)/ccminer-equi-stratum.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@equi/$(DEPDIR)/ccminer-equi.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@equi/$(DEPDIR)/ccminer-equihash.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@equi/blake2/$(DEPDIR)/ccminer-blake2bx.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@lyra2/$(DEPDIR)/ccminer-Lyra2.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@lyra2/$(DEPDIR)/ccminer-Lyra2Z.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@lyra2/$(DEPDIR)/ccminer-Sponge.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@neoscrypt/$(DEPDIR)/ccminer-neoscrypt-cpu.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@neoscrypt/$(DEPDIR)/ccminer-neoscrypt.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@sia/$(DEPDIR)/ccminer-sia-rpc.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@sph/$(DEPDIR)/ccminer-blake.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@sph/$(DEPDIR)/ccminer-blake2b.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@sph/$(DEPDIR)/ccminer-blake2s.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@sph/$(DEPDIR)/ccminer-bmw.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@sph/$(DEPDIR)/ccminer-cubehash.Po@am__quote@
@@ -1111,6 +1333,20 @@ lyra2/ccminer-Sponge.obj: lyra2/Sponge.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ccminer_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o lyra2/ccminer-Sponge.obj `if test -f 'lyra2/Sponge.c'; then $(CYGPATH_W) 'lyra2/Sponge.c'; else $(CYGPATH_W) '$(srcdir)/lyra2/Sponge.c'; fi`
 
+lyra2/ccminer-Lyra2Z.o: lyra2/Lyra2Z.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ccminer_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT lyra2/ccminer-Lyra2Z.o -MD -MP -MF lyra2/$(DEPDIR)/ccminer-Lyra2Z.Tpo -c -o lyra2/ccminer-Lyra2Z.o `test -f 'lyra2/Lyra2Z.c' || echo '$(srcdir)/'`lyra2/Lyra2Z.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) lyra2/$(DEPDIR)/ccminer-Lyra2Z.Tpo lyra2/$(DEPDIR)/ccminer-Lyra2Z.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='lyra2/Lyra2Z.c' object='lyra2/ccminer-Lyra2Z.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ccminer_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o lyra2/ccminer-Lyra2Z.o `test -f 'lyra2/Lyra2Z.c' || echo '$(srcdir)/'`lyra2/Lyra2Z.c
+
+lyra2/ccminer-Lyra2Z.obj: lyra2/Lyra2Z.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ccminer_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT lyra2/ccminer-Lyra2Z.obj -MD -MP -MF lyra2/$(DEPDIR)/ccminer-Lyra2Z.Tpo -c -o lyra2/ccminer-Lyra2Z.obj `if test -f 'lyra2/Lyra2Z.c'; then $(CYGPATH_W) 'lyra2/Lyra2Z.c'; else $(CYGPATH_W) '$(srcdir)/lyra2/Lyra2Z.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) lyra2/$(DEPDIR)/ccminer-Lyra2Z.Tpo lyra2/$(DEPDIR)/ccminer-Lyra2Z.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='lyra2/Lyra2Z.c' object='lyra2/ccminer-Lyra2Z.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ccminer_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o lyra2/ccminer-Lyra2Z.obj `if test -f 'lyra2/Lyra2Z.c'; then $(CYGPATH_W) 'lyra2/Lyra2Z.c'; else $(CYGPATH_W) '$(srcdir)/lyra2/Lyra2Z.c'; fi`
+
 sph/ccminer-blake2s.o: sph/blake2s.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ccminer_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT sph/ccminer-blake2s.o -MD -MP -MF sph/$(DEPDIR)/ccminer-blake2s.Tpo -c -o sph/ccminer-blake2s.o `test -f 'sph/blake2s.c' || echo '$(srcdir)/'`sph/blake2s.c
 @am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) sph/$(DEPDIR)/ccminer-blake2s.Tpo sph/$(DEPDIR)/ccminer-blake2s.Po
@@ -1125,6 +1361,20 @@ sph/ccminer-blake2s.obj: sph/blake2s.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ccminer_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o sph/ccminer-blake2s.obj `if test -f 'sph/blake2s.c'; then $(CYGPATH_W) 'sph/blake2s.c'; else $(CYGPATH_W) '$(srcdir)/sph/blake2s.c'; fi`
 
+crypto/cpu/ccminer-c_keccak.o: crypto/cpu/c_keccak.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ccminer_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT crypto/cpu/ccminer-c_keccak.o -MD -MP -MF crypto/cpu/$(DEPDIR)/ccminer-c_keccak.Tpo -c -o crypto/cpu/ccminer-c_keccak.o `test -f 'crypto/cpu/c_keccak.c' || echo '$(srcdir)/'`crypto/cpu/c_keccak.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) crypto/cpu/$(DEPDIR)/ccminer-c_keccak.Tpo crypto/cpu/$(DEPDIR)/ccminer-c_keccak.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='crypto/cpu/c_keccak.c' object='crypto/cpu/ccminer-c_keccak.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ccminer_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o crypto/cpu/ccminer-c_keccak.o `test -f 'crypto/cpu/c_keccak.c' || echo '$(srcdir)/'`crypto/cpu/c_keccak.c
+
+crypto/cpu/ccminer-c_keccak.obj: crypto/cpu/c_keccak.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ccminer_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT crypto/cpu/ccminer-c_keccak.obj -MD -MP -MF crypto/cpu/$(DEPDIR)/ccminer-c_keccak.Tpo -c -o crypto/cpu/ccminer-c_keccak.obj `if test -f 'crypto/cpu/c_keccak.c'; then $(CYGPATH_W) 'crypto/cpu/c_keccak.c'; else $(CYGPATH_W) '$(srcdir)/crypto/cpu/c_keccak.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) crypto/cpu/$(DEPDIR)/ccminer-c_keccak.Tpo crypto/cpu/$(DEPDIR)/ccminer-c_keccak.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='crypto/cpu/c_keccak.c' object='crypto/cpu/ccminer-c_keccak.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ccminer_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o crypto/cpu/ccminer-c_keccak.obj `if test -f 'crypto/cpu/c_keccak.c'; then $(CYGPATH_W) 'crypto/cpu/c_keccak.c'; else $(CYGPATH_W) '$(srcdir)/crypto/cpu/c_keccak.c'; fi`
+
 neoscrypt/ccminer-neoscrypt-cpu.o: neoscrypt/neoscrypt-cpu.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ccminer_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT neoscrypt/ccminer-neoscrypt-cpu.o -MD -MP -MF neoscrypt/$(DEPDIR)/ccminer-neoscrypt-cpu.Tpo -c -o neoscrypt/ccminer-neoscrypt-cpu.o `test -f 'neoscrypt/neoscrypt-cpu.c' || echo '$(srcdir)/'`neoscrypt/neoscrypt-cpu.c
 @am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) neoscrypt/$(DEPDIR)/ccminer-neoscrypt-cpu.Tpo neoscrypt/$(DEPDIR)/ccminer-neoscrypt-cpu.Po
@@ -1138,6 +1388,20 @@ neoscrypt/ccminer-neoscrypt-cpu.obj: neoscrypt/neoscrypt-cpu.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='neoscrypt/neoscrypt-cpu.c' object='neoscrypt/ccminer-neoscrypt-cpu.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ccminer_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o neoscrypt/ccminer-neoscrypt-cpu.obj `if test -f 'neoscrypt/neoscrypt-cpu.c'; then $(CYGPATH_W) 'neoscrypt/neoscrypt-cpu.c'; else $(CYGPATH_W) '$(srcdir)/neoscrypt/neoscrypt-cpu.c'; fi`
+
+sph/ccminer-blake2b.o: sph/blake2b.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ccminer_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT sph/ccminer-blake2b.o -MD -MP -MF sph/$(DEPDIR)/ccminer-blake2b.Tpo -c -o sph/ccminer-blake2b.o `test -f 'sph/blake2b.c' || echo '$(srcdir)/'`sph/blake2b.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) sph/$(DEPDIR)/ccminer-blake2b.Tpo sph/$(DEPDIR)/ccminer-blake2b.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='sph/blake2b.c' object='sph/ccminer-blake2b.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ccminer_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o sph/ccminer-blake2b.o `test -f 'sph/blake2b.c' || echo '$(srcdir)/'`sph/blake2b.c
+
+sph/ccminer-blake2b.obj: sph/blake2b.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ccminer_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT sph/ccminer-blake2b.obj -MD -MP -MF sph/$(DEPDIR)/ccminer-blake2b.Tpo -c -o sph/ccminer-blake2b.obj `if test -f 'sph/blake2b.c'; then $(CYGPATH_W) 'sph/blake2b.c'; else $(CYGPATH_W) '$(srcdir)/sph/blake2b.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) sph/$(DEPDIR)/ccminer-blake2b.Tpo sph/$(DEPDIR)/ccminer-blake2b.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='sph/blake2b.c' object='sph/ccminer-blake2b.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ccminer_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o sph/ccminer-blake2b.obj `if test -f 'sph/blake2b.c'; then $(CYGPATH_W) 'sph/blake2b.c'; else $(CYGPATH_W) '$(srcdir)/sph/blake2b.c'; fi`
 
 sph/ccminer-bmw.o: sph/bmw.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ccminer_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT sph/ccminer-bmw.o -MD -MP -MF sph/$(DEPDIR)/ccminer-bmw.Tpo -c -o sph/ccminer-bmw.o `test -f 'sph/bmw.c' || echo '$(srcdir)/'`sph/bmw.c
@@ -1617,6 +1881,76 @@ ccminer-cuda.obj: cuda.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ccminer_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o ccminer-cuda.obj `if test -f 'cuda.cpp'; then $(CYGPATH_W) 'cuda.cpp'; else $(CYGPATH_W) '$(srcdir)/cuda.cpp'; fi`
 
+ccminer-nvsettings.o: nvsettings.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ccminer_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT ccminer-nvsettings.o -MD -MP -MF $(DEPDIR)/ccminer-nvsettings.Tpo -c -o ccminer-nvsettings.o `test -f 'nvsettings.cpp' || echo '$(srcdir)/'`nvsettings.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/ccminer-nvsettings.Tpo $(DEPDIR)/ccminer-nvsettings.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='nvsettings.cpp' object='ccminer-nvsettings.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ccminer_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o ccminer-nvsettings.o `test -f 'nvsettings.cpp' || echo '$(srcdir)/'`nvsettings.cpp
+
+ccminer-nvsettings.obj: nvsettings.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ccminer_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT ccminer-nvsettings.obj -MD -MP -MF $(DEPDIR)/ccminer-nvsettings.Tpo -c -o ccminer-nvsettings.obj `if test -f 'nvsettings.cpp'; then $(CYGPATH_W) 'nvsettings.cpp'; else $(CYGPATH_W) '$(srcdir)/nvsettings.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/ccminer-nvsettings.Tpo $(DEPDIR)/ccminer-nvsettings.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='nvsettings.cpp' object='ccminer-nvsettings.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ccminer_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o ccminer-nvsettings.obj `if test -f 'nvsettings.cpp'; then $(CYGPATH_W) 'nvsettings.cpp'; else $(CYGPATH_W) '$(srcdir)/nvsettings.cpp'; fi`
+
+equi/ccminer-equi-stratum.o: equi/equi-stratum.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ccminer_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT equi/ccminer-equi-stratum.o -MD -MP -MF equi/$(DEPDIR)/ccminer-equi-stratum.Tpo -c -o equi/ccminer-equi-stratum.o `test -f 'equi/equi-stratum.cpp' || echo '$(srcdir)/'`equi/equi-stratum.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) equi/$(DEPDIR)/ccminer-equi-stratum.Tpo equi/$(DEPDIR)/ccminer-equi-stratum.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='equi/equi-stratum.cpp' object='equi/ccminer-equi-stratum.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ccminer_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o equi/ccminer-equi-stratum.o `test -f 'equi/equi-stratum.cpp' || echo '$(srcdir)/'`equi/equi-stratum.cpp
+
+equi/ccminer-equi-stratum.obj: equi/equi-stratum.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ccminer_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT equi/ccminer-equi-stratum.obj -MD -MP -MF equi/$(DEPDIR)/ccminer-equi-stratum.Tpo -c -o equi/ccminer-equi-stratum.obj `if test -f 'equi/equi-stratum.cpp'; then $(CYGPATH_W) 'equi/equi-stratum.cpp'; else $(CYGPATH_W) '$(srcdir)/equi/equi-stratum.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) equi/$(DEPDIR)/ccminer-equi-stratum.Tpo equi/$(DEPDIR)/ccminer-equi-stratum.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='equi/equi-stratum.cpp' object='equi/ccminer-equi-stratum.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ccminer_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o equi/ccminer-equi-stratum.obj `if test -f 'equi/equi-stratum.cpp'; then $(CYGPATH_W) 'equi/equi-stratum.cpp'; else $(CYGPATH_W) '$(srcdir)/equi/equi-stratum.cpp'; fi`
+
+equi/ccminer-equi.o: equi/equi.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ccminer_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT equi/ccminer-equi.o -MD -MP -MF equi/$(DEPDIR)/ccminer-equi.Tpo -c -o equi/ccminer-equi.o `test -f 'equi/equi.cpp' || echo '$(srcdir)/'`equi/equi.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) equi/$(DEPDIR)/ccminer-equi.Tpo equi/$(DEPDIR)/ccminer-equi.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='equi/equi.cpp' object='equi/ccminer-equi.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ccminer_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o equi/ccminer-equi.o `test -f 'equi/equi.cpp' || echo '$(srcdir)/'`equi/equi.cpp
+
+equi/ccminer-equi.obj: equi/equi.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ccminer_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT equi/ccminer-equi.obj -MD -MP -MF equi/$(DEPDIR)/ccminer-equi.Tpo -c -o equi/ccminer-equi.obj `if test -f 'equi/equi.cpp'; then $(CYGPATH_W) 'equi/equi.cpp'; else $(CYGPATH_W) '$(srcdir)/equi/equi.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) equi/$(DEPDIR)/ccminer-equi.Tpo equi/$(DEPDIR)/ccminer-equi.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='equi/equi.cpp' object='equi/ccminer-equi.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ccminer_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o equi/ccminer-equi.obj `if test -f 'equi/equi.cpp'; then $(CYGPATH_W) 'equi/equi.cpp'; else $(CYGPATH_W) '$(srcdir)/equi/equi.cpp'; fi`
+
+equi/blake2/ccminer-blake2bx.o: equi/blake2/blake2bx.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ccminer_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT equi/blake2/ccminer-blake2bx.o -MD -MP -MF equi/blake2/$(DEPDIR)/ccminer-blake2bx.Tpo -c -o equi/blake2/ccminer-blake2bx.o `test -f 'equi/blake2/blake2bx.cpp' || echo '$(srcdir)/'`equi/blake2/blake2bx.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) equi/blake2/$(DEPDIR)/ccminer-blake2bx.Tpo equi/blake2/$(DEPDIR)/ccminer-blake2bx.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='equi/blake2/blake2bx.cpp' object='equi/blake2/ccminer-blake2bx.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ccminer_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o equi/blake2/ccminer-blake2bx.o `test -f 'equi/blake2/blake2bx.cpp' || echo '$(srcdir)/'`equi/blake2/blake2bx.cpp
+
+equi/blake2/ccminer-blake2bx.obj: equi/blake2/blake2bx.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ccminer_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT equi/blake2/ccminer-blake2bx.obj -MD -MP -MF equi/blake2/$(DEPDIR)/ccminer-blake2bx.Tpo -c -o equi/blake2/ccminer-blake2bx.obj `if test -f 'equi/blake2/blake2bx.cpp'; then $(CYGPATH_W) 'equi/blake2/blake2bx.cpp'; else $(CYGPATH_W) '$(srcdir)/equi/blake2/blake2bx.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) equi/blake2/$(DEPDIR)/ccminer-blake2bx.Tpo equi/blake2/$(DEPDIR)/ccminer-blake2bx.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='equi/blake2/blake2bx.cpp' object='equi/blake2/ccminer-blake2bx.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ccminer_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o equi/blake2/ccminer-blake2bx.obj `if test -f 'equi/blake2/blake2bx.cpp'; then $(CYGPATH_W) 'equi/blake2/blake2bx.cpp'; else $(CYGPATH_W) '$(srcdir)/equi/blake2/blake2bx.cpp'; fi`
+
+equi/ccminer-equihash.o: equi/equihash.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ccminer_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT equi/ccminer-equihash.o -MD -MP -MF equi/$(DEPDIR)/ccminer-equihash.Tpo -c -o equi/ccminer-equihash.o `test -f 'equi/equihash.cpp' || echo '$(srcdir)/'`equi/equihash.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) equi/$(DEPDIR)/ccminer-equihash.Tpo equi/$(DEPDIR)/ccminer-equihash.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='equi/equihash.cpp' object='equi/ccminer-equihash.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ccminer_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o equi/ccminer-equihash.o `test -f 'equi/equihash.cpp' || echo '$(srcdir)/'`equi/equihash.cpp
+
+equi/ccminer-equihash.obj: equi/equihash.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ccminer_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT equi/ccminer-equihash.obj -MD -MP -MF equi/$(DEPDIR)/ccminer-equihash.Tpo -c -o equi/ccminer-equihash.obj `if test -f 'equi/equihash.cpp'; then $(CYGPATH_W) 'equi/equihash.cpp'; else $(CYGPATH_W) '$(srcdir)/equi/equihash.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) equi/$(DEPDIR)/ccminer-equihash.Tpo equi/$(DEPDIR)/ccminer-equihash.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='equi/equihash.cpp' object='equi/ccminer-equihash.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ccminer_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o equi/ccminer-equihash.obj `if test -f 'equi/equihash.cpp'; then $(CYGPATH_W) 'equi/equihash.cpp'; else $(CYGPATH_W) '$(srcdir)/equi/equihash.cpp'; fi`
+
 ccminer-fuguecoin.o: fuguecoin.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ccminer_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT ccminer-fuguecoin.o -MD -MP -MF $(DEPDIR)/ccminer-fuguecoin.Tpo -c -o ccminer-fuguecoin.o `test -f 'fuguecoin.cpp' || echo '$(srcdir)/'`fuguecoin.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/ccminer-fuguecoin.Tpo $(DEPDIR)/ccminer-fuguecoin.Po
@@ -1659,6 +1993,90 @@ ccminer-myriadgroestl.obj: myriadgroestl.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ccminer_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o ccminer-myriadgroestl.obj `if test -f 'myriadgroestl.cpp'; then $(CYGPATH_W) 'myriadgroestl.cpp'; else $(CYGPATH_W) '$(srcdir)/myriadgroestl.cpp'; fi`
 
+crypto/ccminer-xmr-rpc.o: crypto/xmr-rpc.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ccminer_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT crypto/ccminer-xmr-rpc.o -MD -MP -MF crypto/$(DEPDIR)/ccminer-xmr-rpc.Tpo -c -o crypto/ccminer-xmr-rpc.o `test -f 'crypto/xmr-rpc.cpp' || echo '$(srcdir)/'`crypto/xmr-rpc.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) crypto/$(DEPDIR)/ccminer-xmr-rpc.Tpo crypto/$(DEPDIR)/ccminer-xmr-rpc.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='crypto/xmr-rpc.cpp' object='crypto/ccminer-xmr-rpc.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ccminer_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o crypto/ccminer-xmr-rpc.o `test -f 'crypto/xmr-rpc.cpp' || echo '$(srcdir)/'`crypto/xmr-rpc.cpp
+
+crypto/ccminer-xmr-rpc.obj: crypto/xmr-rpc.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ccminer_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT crypto/ccminer-xmr-rpc.obj -MD -MP -MF crypto/$(DEPDIR)/ccminer-xmr-rpc.Tpo -c -o crypto/ccminer-xmr-rpc.obj `if test -f 'crypto/xmr-rpc.cpp'; then $(CYGPATH_W) 'crypto/xmr-rpc.cpp'; else $(CYGPATH_W) '$(srcdir)/crypto/xmr-rpc.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) crypto/$(DEPDIR)/ccminer-xmr-rpc.Tpo crypto/$(DEPDIR)/ccminer-xmr-rpc.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='crypto/xmr-rpc.cpp' object='crypto/ccminer-xmr-rpc.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ccminer_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o crypto/ccminer-xmr-rpc.obj `if test -f 'crypto/xmr-rpc.cpp'; then $(CYGPATH_W) 'crypto/xmr-rpc.cpp'; else $(CYGPATH_W) '$(srcdir)/crypto/xmr-rpc.cpp'; fi`
+
+crypto/ccminer-wildkeccak-cpu.o: crypto/wildkeccak-cpu.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ccminer_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT crypto/ccminer-wildkeccak-cpu.o -MD -MP -MF crypto/$(DEPDIR)/ccminer-wildkeccak-cpu.Tpo -c -o crypto/ccminer-wildkeccak-cpu.o `test -f 'crypto/wildkeccak-cpu.cpp' || echo '$(srcdir)/'`crypto/wildkeccak-cpu.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) crypto/$(DEPDIR)/ccminer-wildkeccak-cpu.Tpo crypto/$(DEPDIR)/ccminer-wildkeccak-cpu.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='crypto/wildkeccak-cpu.cpp' object='crypto/ccminer-wildkeccak-cpu.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ccminer_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o crypto/ccminer-wildkeccak-cpu.o `test -f 'crypto/wildkeccak-cpu.cpp' || echo '$(srcdir)/'`crypto/wildkeccak-cpu.cpp
+
+crypto/ccminer-wildkeccak-cpu.obj: crypto/wildkeccak-cpu.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ccminer_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT crypto/ccminer-wildkeccak-cpu.obj -MD -MP -MF crypto/$(DEPDIR)/ccminer-wildkeccak-cpu.Tpo -c -o crypto/ccminer-wildkeccak-cpu.obj `if test -f 'crypto/wildkeccak-cpu.cpp'; then $(CYGPATH_W) 'crypto/wildkeccak-cpu.cpp'; else $(CYGPATH_W) '$(srcdir)/crypto/wildkeccak-cpu.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) crypto/$(DEPDIR)/ccminer-wildkeccak-cpu.Tpo crypto/$(DEPDIR)/ccminer-wildkeccak-cpu.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='crypto/wildkeccak-cpu.cpp' object='crypto/ccminer-wildkeccak-cpu.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ccminer_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o crypto/ccminer-wildkeccak-cpu.obj `if test -f 'crypto/wildkeccak-cpu.cpp'; then $(CYGPATH_W) 'crypto/wildkeccak-cpu.cpp'; else $(CYGPATH_W) '$(srcdir)/crypto/wildkeccak-cpu.cpp'; fi`
+
+crypto/ccminer-cryptolight-cpu.o: crypto/cryptolight-cpu.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ccminer_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT crypto/ccminer-cryptolight-cpu.o -MD -MP -MF crypto/$(DEPDIR)/ccminer-cryptolight-cpu.Tpo -c -o crypto/ccminer-cryptolight-cpu.o `test -f 'crypto/cryptolight-cpu.cpp' || echo '$(srcdir)/'`crypto/cryptolight-cpu.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) crypto/$(DEPDIR)/ccminer-cryptolight-cpu.Tpo crypto/$(DEPDIR)/ccminer-cryptolight-cpu.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='crypto/cryptolight-cpu.cpp' object='crypto/ccminer-cryptolight-cpu.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ccminer_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o crypto/ccminer-cryptolight-cpu.o `test -f 'crypto/cryptolight-cpu.cpp' || echo '$(srcdir)/'`crypto/cryptolight-cpu.cpp
+
+crypto/ccminer-cryptolight-cpu.obj: crypto/cryptolight-cpu.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ccminer_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT crypto/ccminer-cryptolight-cpu.obj -MD -MP -MF crypto/$(DEPDIR)/ccminer-cryptolight-cpu.Tpo -c -o crypto/ccminer-cryptolight-cpu.obj `if test -f 'crypto/cryptolight-cpu.cpp'; then $(CYGPATH_W) 'crypto/cryptolight-cpu.cpp'; else $(CYGPATH_W) '$(srcdir)/crypto/cryptolight-cpu.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) crypto/$(DEPDIR)/ccminer-cryptolight-cpu.Tpo crypto/$(DEPDIR)/ccminer-cryptolight-cpu.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='crypto/cryptolight-cpu.cpp' object='crypto/ccminer-cryptolight-cpu.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ccminer_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o crypto/ccminer-cryptolight-cpu.obj `if test -f 'crypto/cryptolight-cpu.cpp'; then $(CYGPATH_W) 'crypto/cryptolight-cpu.cpp'; else $(CYGPATH_W) '$(srcdir)/crypto/cryptolight-cpu.cpp'; fi`
+
+crypto/ccminer-cryptonight-cpu.o: crypto/cryptonight-cpu.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ccminer_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT crypto/ccminer-cryptonight-cpu.o -MD -MP -MF crypto/$(DEPDIR)/ccminer-cryptonight-cpu.Tpo -c -o crypto/ccminer-cryptonight-cpu.o `test -f 'crypto/cryptonight-cpu.cpp' || echo '$(srcdir)/'`crypto/cryptonight-cpu.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) crypto/$(DEPDIR)/ccminer-cryptonight-cpu.Tpo crypto/$(DEPDIR)/ccminer-cryptonight-cpu.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='crypto/cryptonight-cpu.cpp' object='crypto/ccminer-cryptonight-cpu.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ccminer_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o crypto/ccminer-cryptonight-cpu.o `test -f 'crypto/cryptonight-cpu.cpp' || echo '$(srcdir)/'`crypto/cryptonight-cpu.cpp
+
+crypto/ccminer-cryptonight-cpu.obj: crypto/cryptonight-cpu.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ccminer_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT crypto/ccminer-cryptonight-cpu.obj -MD -MP -MF crypto/$(DEPDIR)/ccminer-cryptonight-cpu.Tpo -c -o crypto/ccminer-cryptonight-cpu.obj `if test -f 'crypto/cryptonight-cpu.cpp'; then $(CYGPATH_W) 'crypto/cryptonight-cpu.cpp'; else $(CYGPATH_W) '$(srcdir)/crypto/cryptonight-cpu.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) crypto/$(DEPDIR)/ccminer-cryptonight-cpu.Tpo crypto/$(DEPDIR)/ccminer-cryptonight-cpu.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='crypto/cryptonight-cpu.cpp' object='crypto/ccminer-cryptonight-cpu.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ccminer_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o crypto/ccminer-cryptonight-cpu.obj `if test -f 'crypto/cryptonight-cpu.cpp'; then $(CYGPATH_W) 'crypto/cryptonight-cpu.cpp'; else $(CYGPATH_W) '$(srcdir)/crypto/cryptonight-cpu.cpp'; fi`
+
+crypto/ccminer-oaes_lib.o: crypto/oaes_lib.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ccminer_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT crypto/ccminer-oaes_lib.o -MD -MP -MF crypto/$(DEPDIR)/ccminer-oaes_lib.Tpo -c -o crypto/ccminer-oaes_lib.o `test -f 'crypto/oaes_lib.cpp' || echo '$(srcdir)/'`crypto/oaes_lib.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) crypto/$(DEPDIR)/ccminer-oaes_lib.Tpo crypto/$(DEPDIR)/ccminer-oaes_lib.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='crypto/oaes_lib.cpp' object='crypto/ccminer-oaes_lib.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ccminer_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o crypto/ccminer-oaes_lib.o `test -f 'crypto/oaes_lib.cpp' || echo '$(srcdir)/'`crypto/oaes_lib.cpp
+
+crypto/ccminer-oaes_lib.obj: crypto/oaes_lib.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ccminer_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT crypto/ccminer-oaes_lib.obj -MD -MP -MF crypto/$(DEPDIR)/ccminer-oaes_lib.Tpo -c -o crypto/ccminer-oaes_lib.obj `if test -f 'crypto/oaes_lib.cpp'; then $(CYGPATH_W) 'crypto/oaes_lib.cpp'; else $(CYGPATH_W) '$(srcdir)/crypto/oaes_lib.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) crypto/$(DEPDIR)/ccminer-oaes_lib.Tpo crypto/$(DEPDIR)/ccminer-oaes_lib.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='crypto/oaes_lib.cpp' object='crypto/ccminer-oaes_lib.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ccminer_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o crypto/ccminer-oaes_lib.obj `if test -f 'crypto/oaes_lib.cpp'; then $(CYGPATH_W) 'crypto/oaes_lib.cpp'; else $(CYGPATH_W) '$(srcdir)/crypto/oaes_lib.cpp'; fi`
+
+crypto/ccminer-aesb.o: crypto/aesb.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ccminer_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT crypto/ccminer-aesb.o -MD -MP -MF crypto/$(DEPDIR)/ccminer-aesb.Tpo -c -o crypto/ccminer-aesb.o `test -f 'crypto/aesb.cpp' || echo '$(srcdir)/'`crypto/aesb.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) crypto/$(DEPDIR)/ccminer-aesb.Tpo crypto/$(DEPDIR)/ccminer-aesb.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='crypto/aesb.cpp' object='crypto/ccminer-aesb.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ccminer_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o crypto/ccminer-aesb.o `test -f 'crypto/aesb.cpp' || echo '$(srcdir)/'`crypto/aesb.cpp
+
+crypto/ccminer-aesb.obj: crypto/aesb.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ccminer_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT crypto/ccminer-aesb.obj -MD -MP -MF crypto/$(DEPDIR)/ccminer-aesb.Tpo -c -o crypto/ccminer-aesb.obj `if test -f 'crypto/aesb.cpp'; then $(CYGPATH_W) 'crypto/aesb.cpp'; else $(CYGPATH_W) '$(srcdir)/crypto/aesb.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) crypto/$(DEPDIR)/ccminer-aesb.Tpo crypto/$(DEPDIR)/ccminer-aesb.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='crypto/aesb.cpp' object='crypto/ccminer-aesb.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ccminer_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o crypto/ccminer-aesb.obj `if test -f 'crypto/aesb.cpp'; then $(CYGPATH_W) 'crypto/aesb.cpp'; else $(CYGPATH_W) '$(srcdir)/crypto/aesb.cpp'; fi`
+
 neoscrypt/ccminer-neoscrypt.o: neoscrypt/neoscrypt.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ccminer_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT neoscrypt/ccminer-neoscrypt.o -MD -MP -MF neoscrypt/$(DEPDIR)/ccminer-neoscrypt.Tpo -c -o neoscrypt/ccminer-neoscrypt.o `test -f 'neoscrypt/neoscrypt.cpp' || echo '$(srcdir)/'`neoscrypt/neoscrypt.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) neoscrypt/$(DEPDIR)/ccminer-neoscrypt.Tpo neoscrypt/$(DEPDIR)/ccminer-neoscrypt.Po
@@ -1686,6 +2104,20 @@ ccminer-skein2.obj: skein2.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='skein2.cpp' object='ccminer-skein2.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ccminer_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o ccminer-skein2.obj `if test -f 'skein2.cpp'; then $(CYGPATH_W) 'skein2.cpp'; else $(CYGPATH_W) '$(srcdir)/skein2.cpp'; fi`
+
+sia/ccminer-sia-rpc.o: sia/sia-rpc.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ccminer_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT sia/ccminer-sia-rpc.o -MD -MP -MF sia/$(DEPDIR)/ccminer-sia-rpc.Tpo -c -o sia/ccminer-sia-rpc.o `test -f 'sia/sia-rpc.cpp' || echo '$(srcdir)/'`sia/sia-rpc.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) sia/$(DEPDIR)/ccminer-sia-rpc.Tpo sia/$(DEPDIR)/ccminer-sia-rpc.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='sia/sia-rpc.cpp' object='sia/ccminer-sia-rpc.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ccminer_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o sia/ccminer-sia-rpc.o `test -f 'sia/sia-rpc.cpp' || echo '$(srcdir)/'`sia/sia-rpc.cpp
+
+sia/ccminer-sia-rpc.obj: sia/sia-rpc.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ccminer_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT sia/ccminer-sia-rpc.obj -MD -MP -MF sia/$(DEPDIR)/ccminer-sia-rpc.Tpo -c -o sia/ccminer-sia-rpc.obj `if test -f 'sia/sia-rpc.cpp'; then $(CYGPATH_W) 'sia/sia-rpc.cpp'; else $(CYGPATH_W) '$(srcdir)/sia/sia-rpc.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) sia/$(DEPDIR)/ccminer-sia-rpc.Tpo sia/$(DEPDIR)/ccminer-sia-rpc.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='sia/sia-rpc.cpp' object='sia/ccminer-sia-rpc.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ccminer_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o sia/ccminer-sia-rpc.obj `if test -f 'sia/sia-rpc.cpp'; then $(CYGPATH_W) 'sia/sia-rpc.cpp'; else $(CYGPATH_W) '$(srcdir)/sia/sia-rpc.cpp'; fi`
 
 ccminer-scrypt.o: scrypt.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ccminer_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT ccminer-scrypt.o -MD -MP -MF $(DEPDIR)/ccminer-scrypt.Tpo -c -o ccminer-scrypt.o `test -f 'scrypt.cpp' || echo '$(srcdir)/'`scrypt.cpp
@@ -2049,6 +2481,14 @@ distclean-generic:
 	-rm -f JHA/$(am__dirstamp)
 	-rm -f compat/$(DEPDIR)/$(am__dirstamp)
 	-rm -f compat/$(am__dirstamp)
+	-rm -f crypto/$(DEPDIR)/$(am__dirstamp)
+	-rm -f crypto/$(am__dirstamp)
+	-rm -f crypto/cpu/$(DEPDIR)/$(am__dirstamp)
+	-rm -f crypto/cpu/$(am__dirstamp)
+	-rm -f equi/$(DEPDIR)/$(am__dirstamp)
+	-rm -f equi/$(am__dirstamp)
+	-rm -f equi/blake2/$(DEPDIR)/$(am__dirstamp)
+	-rm -f equi/blake2/$(am__dirstamp)
 	-rm -f heavy/$(DEPDIR)/$(am__dirstamp)
 	-rm -f heavy/$(am__dirstamp)
 	-rm -f lbry/$(DEPDIR)/$(am__dirstamp)
@@ -2063,8 +2503,16 @@ distclean-generic:
 	-rm -f qubit/$(am__dirstamp)
 	-rm -f scrypt/$(DEPDIR)/$(am__dirstamp)
 	-rm -f scrypt/$(am__dirstamp)
+	-rm -f sha256/$(DEPDIR)/$(am__dirstamp)
+	-rm -f sha256/$(am__dirstamp)
+	-rm -f sia/$(DEPDIR)/$(am__dirstamp)
+	-rm -f sia/$(am__dirstamp)
+	-rm -f skunk/$(DEPDIR)/$(am__dirstamp)
+	-rm -f skunk/$(am__dirstamp)
 	-rm -f sph/$(DEPDIR)/$(am__dirstamp)
 	-rm -f sph/$(am__dirstamp)
+	-rm -f tribus/$(DEPDIR)/$(am__dirstamp)
+	-rm -f tribus/$(am__dirstamp)
 	-rm -f x11/$(DEPDIR)/$(am__dirstamp)
 	-rm -f x11/$(am__dirstamp)
 	-rm -f x13/$(DEPDIR)/$(am__dirstamp)
@@ -2083,7 +2531,7 @@ clean-am: clean-binPROGRAMS clean-generic mostlyclean-am
 
 distclean: distclean-recursive
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
-	-rm -rf ./$(DEPDIR) compat/$(DEPDIR) lyra2/$(DEPDIR) neoscrypt/$(DEPDIR) sph/$(DEPDIR)
+	-rm -rf ./$(DEPDIR) compat/$(DEPDIR) crypto/$(DEPDIR) crypto/cpu/$(DEPDIR) equi/$(DEPDIR) equi/blake2/$(DEPDIR) lyra2/$(DEPDIR) neoscrypt/$(DEPDIR) sia/$(DEPDIR) sph/$(DEPDIR)
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-hdr distclean-tags
@@ -2131,7 +2579,7 @@ installcheck-am:
 maintainer-clean: maintainer-clean-recursive
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
 	-rm -rf $(top_srcdir)/autom4te.cache
-	-rm -rf ./$(DEPDIR) compat/$(DEPDIR) lyra2/$(DEPDIR) neoscrypt/$(DEPDIR) sph/$(DEPDIR)
+	-rm -rf ./$(DEPDIR) compat/$(DEPDIR) crypto/$(DEPDIR) crypto/cpu/$(DEPDIR) equi/$(DEPDIR) equi/blake2/$(DEPDIR) lyra2/$(DEPDIR) neoscrypt/$(DEPDIR) sia/$(DEPDIR) sph/$(DEPDIR)
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 
@@ -2180,6 +2628,12 @@ Algo256/blake256.o: Algo256/blake256.cu
 Algo256/cuda_bmw.o: Algo256/cuda_bmw.cu
 	$(NVCC) $(nvcc_FLAGS) --maxrregcount=76 -o $@ -c $<
 
+crypto/cryptonight-core.o: crypto/cryptonight-core.cu
+	$(NVCC) $(nvcc_FLAGS) --maxrregcount=64 -o $@ -c $<
+
+crypto/cryptonight-extra.o: crypto/cryptonight-extra.cu
+	$(NVCC) $(nvcc_FLAGS) -o $@ -c $<
+
 heavy/cuda_hefty1.o: heavy/cuda_hefty1.cu
 	$(NVCC) $(nvcc_FLAGS) --maxrregcount=80 -o $@ -c $<
 
@@ -2203,6 +2657,9 @@ x17/cuda_x17_sha512.o: x17/cuda_x17_sha512.cu
 	$(NVCC) $(nvcc_FLAGS) --maxrregcount=80 -o $@ -c $<
 
 quark/cuda_quark_blake512.o: quark/cuda_quark_blake512.cu
+	$(NVCC) $(nvcc_FLAGS) --maxrregcount=80 -o $@ -c $<
+
+quark/cuda_jh512.o: quark/cuda_jh512.cu
 	$(NVCC) $(nvcc_FLAGS) --maxrregcount=80 -o $@ -c $<
 
 quark/cuda_quark_keccak512.o: quark/cuda_quark_keccak512.cu

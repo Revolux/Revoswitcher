@@ -178,6 +178,7 @@ int scanhash_heavy(int thr_id, struct work *work, uint32_t max_nonce, unsigned l
 			cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync);
 			CUDA_LOG_ERROR();
 		}
+		gpulog(LOG_INFO, thr_id, "Intensity set to %g, %u cuda threads", throughput2intensity(throughput), throughput);
 
 		hefty_cpu_init(thr_id, throughput);
 		sha256_cpu_init(thr_id, throughput);
@@ -295,7 +296,9 @@ int scanhash_heavy(int thr_id, struct work *work, uint32_t max_nonce, unsigned l
 					pdata[19] += nonce - pdata[19];
 					heavycoin_hash((uchar*)vhash, (uchar*)pdata, blocklen);
 					if (memcmp(vhash, foundhash, 32)) {
-						gpulog(LOG_WARNING, thr_id, "result for %08x does not validate on CPU!", nonce);
+						gpu_increment_reject(thr_id);
+						if (!opt_quiet)
+							gpulog(LOG_WARNING, thr_id, "result for %08x does not validate on CPU!", nonce);
 					} else {
 						work_set_target_ratio(work, vhash);
 						rc = 1;

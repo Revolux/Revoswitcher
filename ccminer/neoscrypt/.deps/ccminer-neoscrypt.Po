@@ -49,7 +49,7 @@ neoscrypt/ccminer-neoscrypt.o: neoscrypt/neoscrypt.cpp \
  /usr/include/x86_64-linux-gnu/bits/sched.h \
  /usr/include/x86_64-linux-gnu/bits/timex.h \
  /usr/include/x86_64-linux-gnu/bits/pthreadtypes.h \
- /usr/include/x86_64-linux-gnu/bits/setjmp.h compat/jansson/jansson.h \
+ /usr/include/x86_64-linux-gnu/bits/setjmp.h /usr/include/jansson.h \
  /usr/include/stdio.h /usr/include/libio.h /usr/include/_G_config.h \
  /usr/include/wchar.h /usr/lib/gcc/x86_64-linux-gnu/4.8/include/stdarg.h \
  /usr/include/x86_64-linux-gnu/bits/sys_errlist.h \
@@ -62,7 +62,7 @@ neoscrypt/ccminer-neoscrypt.o: neoscrypt/neoscrypt.cpp \
  /usr/include/x86_64-linux-gnu/bits/stdlib-bsearch.h \
  /usr/include/x86_64-linux-gnu/bits/stdlib-float.h \
  /usr/include/x86_64-linux-gnu/bits/stdlib.h \
- compat/jansson/jansson_config.h /usr/include/curl/curl.h \
+ /usr/include/jansson_config.h /usr/include/curl/curl.h \
  /usr/include/curl/curlver.h /usr/include/curl/curlbuild.h \
  /usr/include/x86_64-linux-gnu/sys/socket.h \
  /usr/include/x86_64-linux-gnu/sys/uio.h \
@@ -205,7 +205,7 @@ ccminer-config.h:
 
 /usr/include/x86_64-linux-gnu/bits/setjmp.h:
 
-compat/jansson/jansson.h:
+/usr/include/jansson.h:
 
 /usr/include/stdio.h:
 
@@ -241,7 +241,7 @@ compat/jansson/jansson.h:
 
 /usr/include/x86_64-linux-gnu/bits/stdlib.h:
 
-compat/jansson/jansson_config.h:
+/usr/include/jansson_config.h:
 
 /usr/include/curl/curl.h:
 

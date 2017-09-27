@@ -1,0 +1,4 @@
+#!/bin/bash
+
+sudo ./overclock.sh
+./ccminer -a myr-gr -o stratum+tcp://hub.miningpoolhub.com:17005 -O amir.rig1:x 

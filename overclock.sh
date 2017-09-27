@@ -20,7 +20,7 @@ CLOCK=40
 ## For example, MEM=1500 means the Memory clock will be increased
 ## By 1500Mhz OVER the original stock value ##
 ## Range should typically be between 0-2000 without additional power supply and VBIOS tweaking ##
-MEM=1200
+MEM=1000
  
 
 CMD='/usr/bin/nvidia-settings'
