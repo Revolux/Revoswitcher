@@ -21,6 +21,8 @@ Set that worker's "Job" and "Account's Default Job" to:
 If you want MiningPoolHub to automatically exhange your altcoins for a single payout coin of your choice (i.e. get paid out in Bitcoin, Ethereum, etc..) change the settings on "Auto Exchange" page
 
 # INSTALLATION
+### 1) Install dependencies
+	`sudo apt install expect`
 ### 1) Download and Extract REVOSWITCHER.zip to the directory of your choice
 ### 2) Make switch.sh and overclock.sh executable
 	`chmod +x switch.sh`
