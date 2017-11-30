@@ -23,14 +23,21 @@ If you want MiningPoolHub to automatically exhange your altcoins for a single pa
 # INSTALLATION
 ### 1) Install dependencies
 	`sudo apt install expect`
-### 1) Download and Extract REVOSWITCHER.zip to the directory of your choice
-### 2) Make switch.sh and overclock.sh executable
+### 2) Download and Extract REVOSWITCHER.zip to the Desktop, or directory of your choice.
+	`git clone https://github.com/Revolux/Revoswitcher`
+### 3) Make switch.sh and overclock.sh executable
 	`chmod +x switch.sh`
 	`chmod +x overclock.sh`
-### 3) Change worker name in `switch.sh` to your own
+### 4) Change worker name in `switch.sh` to your own
 	`#MINER NAME`
 	`NAME=username.WORKERNAME`
 	Make sure your worker password is 'x'
 ### 4) Add REVOSWITCHER to your startup commands 
 To run, add the following line to your Startup Applications Preferences ("STARTUP - CHOOSE MINER HERE" on the Desktop of Revolux Miners)
-`screen -d -m -S REVOSWITCHER /home/revolux/Desktop/REVOSWITCHER/switch.sh`
+`screen -d -m -S REVOSWITCHER /home/revolux/Desktop/Revoswitcher/switch.sh`
+Replace `/home/revolux/Desktop/` with your install directory if necessary
+
+## Mining BTCZ/BTG on Suprnova
+1. `git checkout BTCZ/BTG`
+2. `git pull`
+3. Read README
