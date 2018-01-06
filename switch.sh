@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #MINER NAME
-NAME=amir.rig2
+NAME=amir.LEG2
 
 
 ## DONT TOUCH THESE
@@ -48,8 +48,8 @@ do
               & PID=$! && echo $PID >$PIDFILE ; wait $PID || true; })
 
 
-#monero
-${CURDIR}/monero/xmrMiner/build/xmrMiner -r 0 -R 4 -l 16x54 -o stratum+tcp://us-east.cryptonight-hub.miningpoolhub.com:12024 -O ${NAME}:x -D
+#Cryptonight
+${CURDIR}/xmrMiner/build/xmrMiner -r 0 -R 4 -l 16x54 -o stratum+tcp://us-east.cryptonight-hub.miningpoolhub.com:12024 -O ${NAME}:x -D
 
 #Feathercoin (NEOSCRYPT)
 (PIDFILE=$(mktemp /tmp/foo.XXXXXX) && trap "rm $PIDFILE" 0 \
